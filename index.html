@@ -12,6 +12,18 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <style>
+/* Selbst gehostete Schriften: Space Grotesk + Material Symbols (Subset) */
+@font-face { font-family: 'Space Grotesk'; font-weight: 400; font-style: normal; src: url('./sg-400.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Space Grotesk'; font-weight: 500; font-style: normal; src: url('./sg-500.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Space Grotesk'; font-weight: 600 800; font-style: normal; src: url('./sg-700.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'MSR'; font-style: normal; src: url('./msr.woff2') format('woff2'); font-display: block; }
+.msr {
+  font-family: 'MSR' !important; font-weight: normal; font-style: normal;
+  display: inline-block; line-height: 1; letter-spacing: normal;
+  vertical-align: -0.14em; -webkit-font-smoothing: antialiased;
+}
+</style>
+<style>
 :root {
   --accent: #5B7CFA;
   --accent-soft: rgba(91,124,250,.14);
@@ -611,7 +623,8 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 
 /* ═══════════ V6 — Referenz-Layout ═══════════ */
 /* Farb-Blobs wie im Referenzbild (Lime + Violett, weich verlaufend) */
-.blob { position: absolute; pointer-events: none; z-index: 0; filter: blur(52px); }
+.blob-wrap { position: absolute; top: 0; left: 0; right: 0; height: 480px; overflow: hidden; pointer-events: none; z-index: 0; }
+.blob { position: absolute; pointer-events: none; filter: blur(52px); }
 .blob-lime { top: -70px; left: -50px; width: 380px; height: 320px; background: radial-gradient(closest-side, var(--lime), transparent 72%); opacity: .65; }
 .blob-lav { top: 40px; right: -110px; width: 300px; height: 300px; background: radial-gradient(closest-side, var(--lav), transparent 72%); opacity: .5; }
 [data-theme="dark"] .blob-lime { opacity: .2; }
@@ -693,6 +706,71 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 
 /* Toast leicht anheben über der Pill-Nav */
 .toast { bottom: calc(var(--sab) + 96px); }
+
+/* ═══════════ V7 — Typografie, Icons, Farbe ═══════════ */
+body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+/* Typo-Hierarchie: große Sprünge, enge Laufweite, Micro-Labels */
+.page-title { font-size: 34px; font-weight: 700; letter-spacing: -.03em; }
+.page-eyebrow { font-size: 11px; letter-spacing: .14em; }
+.f-label { font-size: 11px; letter-spacing: .12em; }
+.card-title { font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+
+/* Kein horizontales Scrollen der Seiten */
+.views { overflow: hidden; }
+.view { overflow-x: hidden; }
+
+/* Icon-Größen im Kontext */
+.tab .t-ic.msr { font-size: 23px; line-height: 1; height: auto; }
+.tab { gap: 4px; }
+.fab .msr { font-size: 28px; }
+.fab-mic .msr { font-size: 22px; }
+.icon-btn .msr { font-size: 22px; }
+.chip .msr, .cat-chip .msr { font-size: 15px; }
+.cat-tag .msr { font-size: 12px; }
+.card-title .msr { font-size: 19px; }
+.empty .e-icon.msr {
+  font-size: 26px; width: 56px; height: 56px; line-height: 56px;
+  border-radius: 50%; background: var(--card-2); color: var(--text-2);
+  margin: 0 auto 10px;
+}
+.sheet .empty .e-icon.msr { background: #26262c; }
+.streak .msr { font-size: 13px; vertical-align: -0.12em; }
+.task-del-btn .msr { font-size: 22px; }
+
+/* Farbgeblockte Termin-Karten (Lime / Lavendel / Karte) */
+.ev-card.c-lime { background: var(--lime); border-color: transparent; }
+.ev-card.c-lime .ev-card-title, .ev-card.c-lime .ev-card-time, .ev-card.c-lime .ev-card-cat, .ev-card.c-lime .ev-card-day { color: #131316; }
+.ev-card.c-lime .ev-card-time span { color: rgba(19,19,22,.4); }
+.ev-card.c-lime .ev-go { background: #131316; color: #F4F3EC; }
+.ev-card.c-lav { background: var(--lav); border-color: transparent; }
+.ev-card.c-lav .ev-card-title, .ev-card.c-lav .ev-card-time, .ev-card.c-lav .ev-card-cat, .ev-card.c-lav .ev-card-day { color: #131316; }
+.ev-card.c-lav .ev-card-time span { color: rgba(19,19,22,.4); }
+.ev-card.c-lav .ev-go { background: #131316; color: #F4F3EC; }
+.ev-card-time { font-size: 34px; }
+.ev-card .ev-go .msr { font-size: 16px; }
+
+/* Fokus-Karte: Lavendel-Fläche */
+#home-focus-card { background: var(--lav); border-color: transparent; }
+#home-focus-card .card-title, #home-focus-card .proj-title, #home-focus-card .proj-pct, #home-focus-card .proj-meta { color: #131316; }
+#home-focus-card .card-title .mini-link { color: rgba(19,19,22,.65); }
+#home-focus-card .proj-bar { background: rgba(19,19,22,.14); }
+#home-focus-card .proj-bar > div { background: #131316; }
+#home-focus-card .cat-tag { background: #131316 !important; color: #F4F3EC; }
+
+/* Microinteractions */
+.proj-row, .note-card, .ev-row { transition: transform .12s ease, opacity .12s ease; }
+.proj-row:active, .note-card:active, .ev-row:active { transform: scale(.98); }
+.cat-chip:active, .chip:active, .seg button:active { transform: scale(.94); }
+.cat-chip, .chip, .seg button { transition: transform .12s ease, background .18s ease, color .18s ease, border-color .18s ease; }
+.tab.on::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--lime); margin-top: 1px; }
+.tab::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-top: 1px; }
+.hey-name { font-size: 18px; }
+.big-date { font-size: 86px; font-weight: 700; letter-spacing: -.055em; }
+.big-day { font-size: 32px; font-weight: 500; }
+.day-sub { font-weight: 500; }
+
+
 </style>
 </head>
 <body>
@@ -701,8 +779,7 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 
     <!-- ===== HEUTE ===== -->
     <section class="view active" id="view-heute">
-      <div class="blob blob-lime"></div>
-      <div class="blob blob-lav"></div>
+      <div class="blob-wrap"><div class="blob blob-lime"></div><div class="blob blob-lav"></div></div>
       <div class="prof-row">
         <div class="prof-l">
           <div class="avatar" id="avatar">Y</div>
@@ -711,7 +788,7 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
             <div class="hey-name" id="hey-name">Yan</div>
           </div>
         </div>
-        <button class="icon-btn" id="btn-settings" aria-label="Einstellungen">⚙︎</button>
+        <button class="icon-btn" id="btn-settings" aria-label="Einstellungen"><span class="msr"></span></button>
       </div>
       <div class="big-date" id="big-date"></div>
       <div class="big-day" id="big-day"></div>
@@ -747,7 +824,7 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
           <div class="page-eyebrow">Planung</div>
           <div class="page-title">Kalender</div>
         </div>
-        <button class="icon-btn" id="btn-cal-today" aria-label="Heute">◉</button>
+        <button class="icon-btn" id="btn-cal-today" aria-label="Heute"><span class="msr"></span></button>
       </div>
       <div class="card">
         <div class="cal-head">
@@ -812,16 +889,16 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
   </div>
 
   <!-- FAB -->
-  <button class="fab" id="fab" aria-label="Hinzufügen">＋</button>
-  <button class="fab-mic" id="fab-mic" aria-label="Sprachaufnahme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11.5a7 7 0 0014 0M12 18.5v3M8.5 21.5h7"/></svg></button>
+  <button class="fab" id="fab" aria-label="Hinzufügen"><span class="msr"></span></button>
+  <button class="fab-mic" id="fab-mic" aria-label="Sprachaufnahme"><span class="msr"></span></button>
 
   <!-- Tab bar -->
   <nav class="tabbar">
-    <button class="tab on" data-tab="heute"><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M4.3 4.3l1.7 1.7M18 18l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.3 19.7L6 18M18 6l1.7-1.7"/></svg></span>Heute</button>
-    <button class="tab" data-tab="kalender"><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="3.5"/><path d="M3.5 10h17M8 2.8V6M16 2.8V6"/></svg></span>Kalender</button>
-    <button class="tab" data-tab="aufgaben"><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.2 12.4l2.6 2.6 5-5.4"/></svg></span>Aufgaben</button>
-    <button class="tab" data-tab="ziele"><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span>Ziele</button>
-    <button class="tab" data-tab="mehr"><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.8a2.3 2.3 0 013.2 3.2L8 18.7l-4.4 1.2L4.8 15.5 16.5 3.8z"/></svg></span>Mehr</button>
+    <button class="tab on" data-tab="heute"><span class="t-ic msr"></span>Heute</button>
+    <button class="tab" data-tab="kalender"><span class="t-ic msr"></span>Kalender</button>
+    <button class="tab" data-tab="aufgaben"><span class="t-ic msr"></span>Aufgaben</button>
+    <button class="tab" data-tab="ziele"><span class="t-ic msr"></span>Ziele</button>
+    <button class="tab" data-tab="mehr"><span class="t-ic msr"></span>Mehr</button>
   </nav>
 
   <!-- Sheet -->
@@ -866,25 +943,25 @@ function save() { store.set('yanapp', S); }
 
 /* ================= Lebensbereiche ================= */
 const CATS = [
-  { id: 'musik',    label: 'Musik',            icon: '🎤', color: '#EC4899',
+  { id: 'musik',    label: 'Musik',            icon: 'music_note', color: '#EC4899',
     kw: ['musik','song','songs','studio','beat','beats','mix','master','mastern','release','gig','auftritt','konzert','songtext','text schreiben','aufnahme','aufnehmen','musikvideo','spotify','label','probe','proben','bühne','buehne','instrumental','hook','feature','cover','single','album','ep'] },
-  { id: 'arbeit',   label: 'Arbeit',           icon: '💼', color: '#0EA5E9',
+  { id: 'arbeit',   label: 'Arbeit',           icon: 'work', color: '#0EA5E9',
     kw: ['arbeit','schicht','meeting','kunde','kunden','chef','büro','buero','job','bewerbung','projekt','kollege','kollegen','dienst'] },
-  { id: 'sport',    label: 'Sport & Gesundheit', icon: '💪', color: '#2FA46A',
+  { id: 'sport',    label: 'Sport & Gesundheit', icon: 'exercise', color: '#2FA46A',
     kw: ['training','gym','fitness','laufen','joggen','sport','workout','arzt','ärztin','zahnarzt','apotheke','medikament','physio','impfung','spiel','turnier','schwimmen','fußball','fussball'] },
-  { id: 'sozial',   label: 'Familie & Freunde', icon: '❤️', color: '#E5484D',
+  { id: 'sozial',   label: 'Familie & Freunde', icon: 'favorite', color: '#E5484D',
     kw: ['mama','papa','mutter','vater','familie','freund','freunde','freundin','treffen','geburtstag','feier','party','besuch','date','oma','opa','bruder','schwester','essen gehen','kino','grillen'] },
-  { id: 'haushalt', label: 'Haushalt & Einkauf', icon: '🏠', color: '#E8930C',
+  { id: 'haushalt', label: 'Haushalt & Einkauf', icon: 'home', color: '#E8930C',
     kw: ['einkaufen','kaufen','putzen','wäsche','waesche','waschen','aufräumen','aufraeumen','müll','muell','kochen','supermarkt','besorgen','reparieren','spülen','spuelen','staubsaugen','paket'] },
-  { id: 'finanzen', label: 'Finanzen',         icon: '💶', color: '#14B8A6',
+  { id: 'finanzen', label: 'Finanzen',         icon: 'payments', color: '#14B8A6',
     kw: ['überweisen','ueberweisen','bezahlen','rechnung','geld','bank','miete','sparen','budget','versicherung','steuer','kündigen','kuendigen','abo','finanzamt','bafög','bafoeg'] },
-  { id: 'privat',   label: 'Privat',           icon: '✨', color: '#5B7CFA', kw: [] },
+  { id: 'privat',   label: 'Privat',           icon: 'auto_awesome', color: '#5B7CFA', kw: [] },
 ];
 const catById = id => CATS.find(c => c.id === id) || null;
 function catChipsHtml(rowId, selected) {
   return `<div class="cat-scroll" id="${rowId}">
     <button class="cat-chip ${!selected ? 'on' : ''}" data-cat="" style="${!selected ? 'background:var(--text);color:var(--bg)' : ''}">Ohne</button>
-    ${CATS.map(c => `<button class="cat-chip ${selected === c.id ? 'on' : ''}" data-cat="${c.id}" style="${selected === c.id ? 'background:' + c.color : ''}">${c.icon} ${c.label}</button>`).join('')}
+    ${CATS.map(c => `<button class="cat-chip ${selected === c.id ? 'on' : ''}" data-cat="${c.id}" style="${selected === c.id ? 'background:' + c.color : ''}">${icon(c.icon)} ${c.label}</button>`).join('')}
   </div>`;
 }
 function bindCatRow(rowId, onPick) {
@@ -902,7 +979,7 @@ function bindCatRow(rowId, onPick) {
 }
 function catTag(id) {
   const c = catById(id);
-  return c ? `<span class="cat-tag" style="background:${c.color}">${c.icon} ${c.label.split(' ')[0]}</span>` : '';
+  return c ? `<span class="cat-tag" style="background:${c.color}">${icon(c.icon)} ${c.label.split(' ')[0]}</span>` : '';
 }
 
 const EV_COLORS = ['#5B7CFA', '#8A5CF6', '#E5484D', '#E8930C', '#2FA46A', '#0EA5E9'];
@@ -929,6 +1006,9 @@ function relDay(isoStr) {
   return fmtDate(isoStr);
 }
 function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* Icon-System (Material Symbols Rounded, Subset, selbst gehostet) */
+const ICON = { music_note:'\ue405', work:'\ue943', exercise:'\uf6e6', favorite:'\ue87e', home:'\ue9b2', payments:'\uef63', auto_awesome:'\ue65f', clear_day:'\uf157', calendar_month:'\uebcc', task_alt:'\ue2e6', track_changes:'\ue8e1', edit_note:'\ue745', add:'\ue145', mic:'\ue31d', settings:'\ue8b8', arrow_outward:'\uf8ce', event_busy:'\ue615', celebration:'\uea65', lightbulb:'\ue90f', local_fire_department:'\uef55', download:'\uf090', upload:'\uf09b', event:'\ue878', repeat:'\ue040', delete:'\ue92e', close:'\ue5cd', check:'\ue668', search:'\uef7a', chevron_right:'\ue5cc', mail:'\ue159', sticky_note_2:'\uf1fc', flag:'\uf0c6', timer:'\ue425', bolt:'\uea0b' };
+const icon = n => `<span class="msr">${ICON[n] || ''}</span>`;
 let toastTimer;
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
@@ -994,9 +1074,9 @@ let homeFilter = null;
 function evCardHtml(e, i) {
   const c = catById(e.cat);
   const tm = e.time ? e.time.split(':') : null;
-  return `<div class="ev-card ${i === 0 ? 'hl' : ''}" data-ev="${e.id}">
-    <div class="ev-card-cat">${c ? c.icon + ' ' + esc(c.label.split(' ')[0]) : '📌'}</div>
-    <button class="ev-go">›</button>
+  return `<div class="ev-card ${['hl', 'c-lime', 'c-lav'][i % 3]}" data-ev="${e.id}">
+    <div class="ev-card-cat">${c ? icon(c.icon) + ' ' + esc(c.label.split(' ')[0]) : icon('flag')}</div>
+    <button class="ev-go"><span class="msr"></span></button>
     <div class="ev-card-title">${esc(e.title)}</div>
     <div class="ev-card-time">${tm ? `${esc(tm[0])}:<span>${esc(tm[1])}</span>` : '—'}</div>
     <div class="ev-card-day">${esc(relDay(e.date))}</div>
@@ -1023,7 +1103,7 @@ function renderHome() {
   $('#home-filter').innerHTML =
     `<button class="cat-chip ${!homeFilter ? 'on' : ''}" data-hf="">Alle</button>` +
     CATS.filter(c => usedCats.has(c.id)).map(c =>
-      `<button class="cat-chip ${homeFilter === c.id ? 'on' : ''}" data-hf="${c.id}">${c.icon} ${esc(c.label.split(' ')[0])}</button>`
+      `<button class="cat-chip ${homeFilter === c.id ? 'on' : ''}" data-hf="${c.id}">${icon(c.icon)} ${esc(c.label.split(' ')[0])}</button>`
     ).join('');
 
   // Termine als Karten-Raster (heute + demnächst, max 4)
@@ -1033,13 +1113,13 @@ function renderHome() {
     .slice(0, 4);
   $('#home-events').innerHTML = upcoming.length
     ? `<div class="ev-grid">${upcoming.map(evCardHtml).join('')}</div>`
-    : '<div class="empty"><span class="e-icon">🗓️</span>Keine anstehenden Termine</div>';
+    : '<div class="empty"><span class="e-icon msr"></span>Keine anstehenden Termine</div>';
 
   // Aufgaben (überfällig/heute zuerst, max 4)
   const sorted = open.filter(x => !homeFilter || x.cat === homeFilter)
     .sort((a, b) => (a.due || '9999') < (b.due || '9999') ? -1 : 1).slice(0, 4);
   $('#home-tasks').innerHTML = sorted.length ? sorted.map(taskRowHtml).join('')
-    : '<div class="empty"><span class="e-icon">🎉</span>Keine offenen Aufgaben</div>';
+    : '<div class="empty"><span class="e-icon msr"></span>Keine offenen Aufgaben</div>';
 
   // Gewohnheiten heute
   const hc = $('#home-habits-card');
@@ -1051,7 +1131,7 @@ function renderHome() {
       return `<div class="hh-row ${done ? 'done' : ''}">
         <div class="hh-check" data-hh="${h.id}">✓</div>
         <div class="hh-name">${h.icon} ${esc(h.title)}</div>
-        ${st > 0 ? `<span class="streak">🔥 ${st}</span>` : ''}
+        ${st > 0 ? `<span class="streak">${icon('local_fire_department')} ${st}</span>` : ''}
       </div>`;
     }).join('');
   } else hc.style.display = 'none';
@@ -1092,7 +1172,7 @@ function renderCal() {
   $('#sel-day-title').innerHTML = `${esc(relDay(selDay))} <span class="mini-link" id="add-ev-day">+ Termin</span>`;
   const dayEvs = S.events.filter(e => e.date === selDay).sort((a,b) => (a.time||'').localeCompare(b.time||''));
   $('#day-events').innerHTML = dayEvs.length ? dayEvs.map(evRowHtml).join('')
-    : '<div class="empty"><span class="e-icon">🌤️</span>Keine Termine an diesem Tag</div>';
+    : '<div class="empty"><span class="e-icon msr"></span>Keine Termine an diesem Tag</div>';
 }
 function evRowHtml(e) {
   return `<div class="ev-row" data-ev="${e.id}">
@@ -1145,8 +1225,8 @@ function renderTasks() {
   if (taskFilter === 'erledigt') list = list.filter(t => t.done);
   list.sort((a,b) => (a.due || '9999') < (b.due || '9999') ? -1 : 1);
   $('#task-list').innerHTML = list.length
-    ? list.map(t => `<div class="task-swipe"><button class="task-del-btn" data-tdel="${t.id}" aria-label="Löschen">🗑</button>${taskRowHtml(t)}</div>`).join('')
-    : `<div class="empty"><span class="e-icon">${taskFilter === 'erledigt' ? '📭' : '🎉'}</span>${taskFilter === 'erledigt' ? 'Noch nichts erledigt' : 'Keine Aufgaben hier'}</div>`;
+    ? list.map(t => `<div class="task-swipe"><button class="task-del-btn" data-tdel="${t.id}" aria-label="Löschen"><span class="msr"></span></button>${taskRowHtml(t)}</div>`).join('')
+    : `<div class="empty"><span class="e-icon msr">${taskFilter === 'erledigt' ? ICON.mail : ICON.celebration}</span>${taskFilter === 'erledigt' ? 'Noch nichts erledigt' : 'Keine Aufgaben hier'}</div>`;
 }
 document.addEventListener('click', e => {
   if (Date.now() < suppressClickUntil) return;
@@ -1206,7 +1286,7 @@ function renderNotes() {
       <div class="note-text">${esc(n.text)}</div>
       <div class="note-date">${n.cat ? catTag(n.cat) + ' · ' : ''}${new Date(n.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
     </div>`).join('')
-    : '<div class="empty"><span class="e-icon">💭</span>Noch keine Notizen.<br>Tippe auf ＋ um eine zu erstellen.</div>';
+    : '<div class="empty"><span class="e-icon msr"></span>Noch keine Notizen.<br>Tippe auf ＋ um eine zu erstellen.</div>';
 }
 document.addEventListener('click', e => {
   const n = e.target.closest('[data-note]');
@@ -1233,9 +1313,9 @@ function sheetTask(t) {
     </div>
     <div class="f-label">Priorität</div>
     <div class="chip-row" id="st-prio">
-      <button class="chip ${t && t.prio === 'hoch' ? 'on' : ''}" data-p="hoch">🔴 Hoch</button>
-      <button class="chip ${t && t.prio === 'mittel' ? 'on' : ''}" data-p="mittel">🟠 Mittel</button>
-      <button class="chip ${(!t || !t.prio || t.prio === 'niedrig') ? 'on' : ''}" data-p="niedrig">⚪️ Niedrig</button>
+      <button class="chip ${t && t.prio === 'hoch' ? 'on' : ''}" data-p="hoch"><span class="prio-dot prio-hoch" style="display:inline-block"></span> Hoch</button>
+      <button class="chip ${t && t.prio === 'mittel' ? 'on' : ''}" data-p="mittel"><span class="prio-dot prio-mittel" style="display:inline-block"></span> Mittel</button>
+      <button class="chip ${(!t || !t.prio || t.prio === 'niedrig') ? 'on' : ''}" data-p="niedrig"><span class="prio-dot prio-niedrig" style="display:inline-block"></span> Niedrig</button>
     </div>
     <div class="f-label">Lebensbereich</div>
     ${catChipsHtml('st-cat', t ? t.cat : null)}
@@ -1388,7 +1468,7 @@ function sheetNote(n) {
     <div class="f-label">Lebensbereich</div>
     ${catChipsHtml('sn-cat', n ? n.cat : null)}
     <button class="btn btn-primary" id="sn-save">Speichern</button>
-    ${isNew ? '' : '<button class="btn" style="background:var(--accent-soft);color:var(--accent);margin-top:8px" id="sn-analyze">✨ Analysieren → Aufgabe / Termin</button>'}
+    ${isNew ? '' : '<button class="btn" style="background:var(--accent-soft);color:var(--accent);margin-top:8px" id="sn-analyze"><span class="msr"></span> Analysieren → Aufgabe / Termin</button>'}
     ${isNew ? '' : '<button class="btn btn-ghost-danger" id="sn-del">Löschen</button>'}
   `);
   let cat = n ? n.cat || null : null;
@@ -1427,8 +1507,8 @@ $('#btn-settings').addEventListener('click', () => {
     <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">Erinnert dich an fällige Aufgaben mit Uhrzeit und an Termine (30 Min. vorher), solange die App installiert ist.</div>
     <div class="f-label">Daten</div>
     <div class="f-row">
-      <button class="chip" id="set-export" style="text-align:center;padding:11px">⬇️ Backup exportieren</button>
-      <button class="chip" id="set-import" style="text-align:center;padding:11px">⬆️ Backup laden</button>
+      <button class="chip" id="set-export" style="text-align:center;padding:11px"><span class="msr"></span> Backup exportieren</button>
+      <button class="chip" id="set-import" style="text-align:center;padding:11px"><span class="msr"></span> Backup laden</button>
     </div>
     <input type="file" id="set-import-file" accept=".json,application/json" style="display:none">
     <div class="f-label">KI-Analyse (Claude)</div>
@@ -1498,7 +1578,7 @@ function projRowHtml(p) {
   const c = catById(p.cat);
   return `<div class="proj-row" data-proj="${p.id}">
     <div class="proj-top">
-      <div class="proj-title">${c ? c.icon + ' ' : ''}${esc(p.title)}</div>
+      <div class="proj-title">${c ? icon(c.icon) + ' ' : ''}${esc(p.title)}</div>
       <div class="proj-pct" ${pct >= 100 ? 'style="color:var(--ok)"' : ''}>${pct >= 100 ? '✓ Erreicht' : pct + '%'}</div>
     </div>
     <div class="proj-bar"><div style="width:${pct}%;${pct >= 100 ? 'background:var(--ok)' : (c ? 'background:' + c.color : '')}"></div></div>
@@ -1514,9 +1594,9 @@ function renderZiele() {
   const active = S.projects.filter(p => !p.archived);
   $('#project-list').innerHTML = active.length
     ? active.slice().sort((a, b) => (a.deadline || '9999') < (b.deadline || '9999') ? -1 : 1).map(projRowHtml).join('')
-    : '<div class="empty"><span class="e-icon">🎯</span>Noch keine Ziele.<br>Leg dein erstes an – z. B. „EP fertigstellen" oder ein Sparziel.</div>';
+    : '<div class="empty"><span class="e-icon msr"></span>Noch keine Ziele.<br>Leg dein erstes an – z. B. „EP fertigstellen" oder ein Sparziel.</div>';
   $('#habit-list').innerHTML = S.habits.length ? S.habits.map(habitRowHtml).join('')
-    : '<div class="empty"><span class="e-icon">🔁</span>Noch keine Gewohnheiten.<br>Z. B. „Training", „Songwriting", „Lesen".</div>';
+    : '<div class="empty"><span class="e-icon msr"></span>Noch keine Gewohnheiten.<br>Z. B. „Training", „Songwriting", „Lesen".</div>';
 }
 
 /* ================= Gewohnheiten ================= */
@@ -1538,7 +1618,7 @@ function habitRowHtml(h) {
     <div class="habit-top">
       <span style="font-size:17px">${h.icon}</span>
       <span class="habit-name" data-habit-edit="${h.id}">${esc(h.title)}</span>
-      ${streak > 0 ? `<span class="streak">🔥 ${streak}</span>` : ''}
+      ${streak > 0 ? `<span class="streak">${icon('local_fire_department')} ${streak}</span>` : ''}
     </div>
     <div class="habit-week">
       ${weekDays().map((d, i) => `<div class="hw-day">
@@ -1708,11 +1788,11 @@ function sheetChooseGoal() {
   openSheet(`
     <h3>Was möchtest du anlegen?</h3>
     <button class="choose-btn" id="cg-proj">
-      <span class="choose-ic" style="background:var(--accent-grad)">🎯</span>
+      <span class="choose-ic" style="background:var(--accent-grad)"><span class="msr"></span></span>
       <span class="choose-t"><b>Ziel / Projekt</b><span>Mit Meilensteinen oder Zahlenziel – z. B. EP, Sparziel</span></span>
     </button>
     <button class="choose-btn" id="cg-habit">
-      <span class="choose-ic" style="background:linear-gradient(135deg,#2FA46A,#0EA5E9)">🔁</span>
+      <span class="choose-ic" style="background:linear-gradient(135deg,#2FA46A,#0EA5E9)"><span class="msr"></span></span>
       <span class="choose-t"><b>Gewohnheit</b><span>Täglich abhaken, Streaks aufbauen – z. B. Training</span></span>
     </button>
   `);
@@ -1893,7 +1973,7 @@ function openCapture(prefill) {
       <div class="cap-status" id="cap-status">${SR ? 'Tippe aufs Mikrofon und sprich einfach los' : 'Tippe ins Feld und nutze das 🎤 auf deiner Tastatur'}</div>
       <div class="cap-live" id="cap-live"></div>
       <textarea class="f-area" id="cap-text" placeholder="…oder hier tippen / diktieren" style="margin-top:10px;min-height:60px"></textarea>
-      <button class="btn btn-primary" id="cap-analyze">✨ Analysieren</button>
+      <button class="btn btn-primary" id="cap-analyze"><span class="msr"></span> Analysieren</button>
       <div id="cap-props"></div>
       <div id="cap-commit"></div>
     </div>
@@ -1920,7 +2000,7 @@ function openCapture(prefill) {
         capProps = parseCapture(text);
         renderProps();
       }
-      btn.disabled = false; btn.textContent = '✨ Analysieren'; btn.style.opacity = '';
+      btn.disabled = false; btn.innerHTML = icon('auto_awesome') + ' Analysieren'; btn.style.opacity = '';
     } else {
       capProps = parseCapture(text);
       renderProps();
@@ -1954,7 +2034,7 @@ function toggleRec() {
 function stopRec() { if (rec && recActive) { try { rec.stop(); } catch (e) {} } recActive = false; const b = $('#cap-mic'); if (b) b.classList.remove('rec'); }
 
 let capProps = [];
-const TYPE_LABEL = { event: '📅 Termin', task: '✓ Aufgabe', note: '✎ Notiz', project: '🎯 Ziel' };
+const TYPE_LABEL = { event: icon('event') + ' Termin', task: icon('task_alt') + ' Aufgabe', note: icon('edit_note') + ' Notiz', project: icon('track_changes') + ' Ziel' };
 function syncProps() {
   capProps.forEach((p, i) => {
     const t = document.getElementById('pt-' + i); if (t) p.title = t.value;
