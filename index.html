@@ -480,9 +480,12 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   --blur-bg: rgba(14,14,17,.7);
 }
 
-/* Viewport-Fix: fixes App-Shell statt dvh-Sprüngen (iOS Safari) */
+/* Viewport-Fix: App misst ihre sichtbare Höhe selbst (--vh per JS),
+   alle unteren Elemente hängen absolut an der ECHTEN Unterkante */
 html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 100%; overscroll-behavior: none; }
-#app { height: 100%; position: absolute; inset: 0; }
+#app { position: fixed; top: 0; left: 0; right: 0; height: var(--vh, 100dvh); }
+.tabbar, .fab, .fab-mic, .sheet, .toast { position: absolute; }
+.sheet-backdrop { position: absolute; inset: 0; }
 
 /* Karten & Radien */
 .card { border-radius: 26px; padding: 18px; }
@@ -736,14 +739,14 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
     <button class="tab" data-tab="ziele"><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span>Ziele</button>
     <button class="tab" data-tab="mehr"><span class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.8a2.3 2.3 0 013.2 3.2L8 18.7l-4.4 1.2L4.8 15.5 16.5 3.8z"/></svg></span>Mehr</button>
   </nav>
+
+  <!-- Sheet -->
+  <div class="sheet-backdrop" id="backdrop"></div>
+  <div class="sheet" id="sheet"><div class="grip"></div><div id="sheet-content"></div></div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
 </div>
-
-<!-- Sheet -->
-<div class="sheet-backdrop" id="backdrop"></div>
-<div class="sheet" id="sheet"><div class="grip"></div><div id="sheet-content"></div></div>
-
-<!-- Toast -->
-<div class="toast" id="toast"></div>
 <script>
 /* ================= Storage (mit Fallback) ================= */
 const mem = {};
@@ -2085,6 +2088,16 @@ document.addEventListener('click', e => {
 function renderAll() {
   renderHome(); renderCal(); renderTasks(); renderLinks(); renderNotes(); renderZiele(); updateBadge();
 }
+/* Echte sichtbare Höhe messen (iOS-Toolbar/Viewport-Bug) */
+function fitVH() {
+  document.documentElement.style.setProperty('--vh', window.innerHeight + 'px');
+}
+fitVH();
+addEventListener('resize', fitVH);
+addEventListener('orientationchange', () => setTimeout(fitVH, 250));
+addEventListener('pageshow', fitVH);
+setTimeout(fitVH, 350);
+
 applyTheme();
 renderAll();
 checkReminders();
