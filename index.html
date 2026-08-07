@@ -775,6 +775,46 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 .cat-chip, .chip, .seg button { transition: transform .12s ease, background .18s ease, color .18s ease, border-color .18s ease; }
 .tab.on::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--lime); margin-top: 1px; }
 .tab::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-top: 1px; }
+/* ---------- Songwriting ---------- */
+.song-card { cursor: pointer; }
+.song-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.song-title { font-size: 17px; font-weight: 700; letter-spacing: -.01em; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.song-status { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.song-status.s-idee { background: var(--card-2); color: var(--text-2); }
+.song-status.s-arbeit { background: var(--lav); color: #131316; }
+.song-status.s-fertig { background: var(--lime); color: #131316; }
+.song-meta { font-size: 12.5px; color: var(--text-2); font-weight: 600; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
+.song-snippet { font-size: 13.5px; color: var(--text-2); margin-top: 8px; line-height: 1.5; max-height: 42px; overflow: hidden; }
+.sec-card { border: 1.5px solid var(--line); border-radius: 16px; padding: 12px; margin-top: 10px; background: var(--card); }
+.sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.sec-type { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--lav); }
+.sec-chords {
+  width: 100%; border: none; background: var(--card-2); border-radius: 10px;
+  padding: 9px 11px; font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 13.5px; color: var(--lime); outline: none; margin-bottom: 7px;
+}
+.sheet .sec-chords { background: #17171B; }
+.sec-lyrics {
+  width: 100%; border: none; background: transparent; font-family: inherit;
+  font-size: 15px; line-height: 1.6; color: var(--text); outline: none;
+  resize: none; min-height: 66px;
+}
+.memo-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.memo-row:last-child { border-bottom: none; }
+.memo-play {
+  width: 38px; height: 38px; min-width: 38px; border-radius: 50%; border: none;
+  background: var(--lime); color: #131316; display: grid; place-items: center; font-size: 18px; cursor: pointer;
+}
+.memo-name { flex: 1; font-size: 13.5px; font-weight: 600; }
+.memo-del { border: none; background: none; color: var(--text-3); cursor: pointer; font-size: 16px; }
+.rec-btn {
+  width: 100%; border: 1.5px dashed var(--text-3); background: transparent; color: var(--text-2);
+  border-radius: 14px; padding: 13px; font-size: 14.5px; font-weight: 700; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.rec-btn.rec { border-color: var(--danger); color: var(--danger); border-style: solid; animation: recPulse 1.2s ease infinite; }
+@keyframes recPulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+
 .hey-name { font-size: 18px; }
 .big-date { font-size: 86px; font-weight: 700; letter-spacing: -.055em; }
 .big-day { font-size: 32px; font-weight: 500; }
@@ -886,13 +926,18 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
       </div>
     </section>
 
-    <!-- ===== MEHR (Notizen + Links) ===== -->
+    <!-- ===== MEHR (Notizen + Musik) ===== -->
     <section class="view" id="view-mehr">
       <div class="page-head">
-        <div class="page-eyebrow">Ideen & Zugriffe</div>
-        <div class="page-title">Notizen</div>
+        <div class="page-eyebrow">Ideen & Kreation</div>
+        <div class="page-title" id="mehr-title">Notizen</div>
+      </div>
+      <div class="seg" id="mehr-mode" style="margin-bottom:14px">
+        <button data-mm="notizen" class="on">Notizen</button>
+        <button data-mm="musik">Musik</button>
       </div>
       <div id="notes-list"></div>
+      <div id="songs-list" style="display:none"></div>
     </section>
 
   </div>
@@ -946,6 +991,7 @@ let S = store.get('yanapp', null) || {
 };
 if (!S.projects) S.projects = [];
 if (!S.habits) S.habits = [];
+if (!S.songs) S.songs = [];
 // Migration: entfernte Bereiche auf "privat" mappen
 [S.tasks, S.events, S.notes, S.projects].forEach(list => (list || []).forEach(x => { if (x.cat === 'uni') x.cat = 'privat'; }));
 function save() { store.set('yanapp', S); }
@@ -1016,7 +1062,7 @@ function relDay(isoStr) {
 }
 function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 /* Icon-System (Material Symbols Rounded, Subset, selbst gehostet) */
-const ICON = { music_note:'\ue405', work:'\ue943', exercise:'\uf6e6', favorite:'\ue87e', home:'\ue9b2', payments:'\uef63', auto_awesome:'\ue65f', clear_day:'\uf157', calendar_month:'\uebcc', task_alt:'\ue2e6', track_changes:'\ue8e1', edit_note:'\ue745', add:'\ue145', mic:'\ue31d', settings:'\ue8b8', arrow_outward:'\uf8ce', event_busy:'\ue615', celebration:'\uea65', lightbulb:'\ue90f', local_fire_department:'\uef55', download:'\uf090', upload:'\uf09b', event:'\ue878', repeat:'\ue040', delete:'\ue92e', close:'\ue5cd', check:'\ue668', search:'\uef7a', chevron_right:'\ue5cc', mail:'\ue159', sticky_note_2:'\uf1fc', flag:'\uf0c6', timer:'\ue425', bolt:'\uea0b' };
+const ICON = { music_note:'\ue405', work:'\ue943', exercise:'\uf6e6', favorite:'\ue87e', home:'\ue9b2', payments:'\uef63', auto_awesome:'\ue65f', clear_day:'\uf157', calendar_month:'\uebcc', task_alt:'\ue2e6', track_changes:'\ue8e1', edit_note:'\ue745', add:'\ue145', mic:'\ue31d', settings:'\ue8b8', arrow_outward:'\uf8ce', event_busy:'\ue615', celebration:'\uea65', lightbulb:'\ue90f', local_fire_department:'\uef55', download:'\uf090', upload:'\uf09b', event:'\ue878', repeat:'\ue040', delete:'\ue92e', close:'\ue5cd', check:'\ue668', search:'\uef7a', chevron_right:'\ue5cc', mail:'\ue159', sticky_note_2:'\uf1fc', flag:'\uf0c6', timer:'\ue425', bolt:'\uea0b', play_arrow:'\ue037', stop:'\ue047', picture_as_pdf:'\ue415', graphic_eq:'\ue1b8', library_music:'\ue030' };
 const icon = n => `<span class="msr">${ICON[n] || ''}</span>`;
 let toastTimer;
 function toast(msg) {
@@ -1333,6 +1379,270 @@ document.addEventListener('click', e => {
   const n = e.target.closest('[data-note]');
   if (n) sheetNote(S.notes.find(x => x.id === n.dataset.note));
 });
+
+/* ================= SONGWRITING ================= */
+let mehrMode = 'notizen';
+const SONG_STATUS = { idee: 'Idee', arbeit: 'In Arbeit', fertig: 'Fertig' };
+const SEC_TYPES = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Outro'];
+function renderSongs() {
+  const list = S.songs.slice().sort((a, b) => b.updatedAt - a.updatedAt);
+  $('#songs-list').innerHTML = list.length ? list.map(s => {
+    const snippet = (s.sections || []).map(x => x.lyrics).filter(Boolean).join(' ').slice(0, 90);
+    return `<div class="card song-card" data-song="${s.id}">
+      <div class="song-top">
+        <div class="song-title">${icon('music_note')} ${esc(s.title)}</div>
+        <span class="song-status s-${s.status === 'fertig' ? 'fertig' : s.status === 'arbeit' ? 'arbeit' : 'idee'}">${SONG_STATUS[s.status] || 'Idee'}</span>
+      </div>
+      <div class="song-meta">
+        ${s.key ? `<span>${esc(s.key)}</span>` : ''}
+        ${s.bpm ? `<span>${esc(String(s.bpm))} BPM</span>` : ''}
+        <span>${(s.sections || []).length} Parts</span>
+        <span>${new Date(s.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}</span>
+      </div>
+      ${snippet ? `<div class="song-snippet">${esc(snippet)}…</div>` : ''}
+    </div>`;
+  }).join('') : `<div class="empty"><span class="e-icon msr">${ICON.library_music}</span>Noch keine Songs.<br>Tippe auf ＋ für deinen ersten.</div>`;
+}
+function renderMehr() {
+  const musik = mehrMode === 'musik';
+  $('#mehr-title').textContent = musik ? 'Musik' : 'Notizen';
+  $('#notes-list').style.display = musik ? 'none' : '';
+  $('#songs-list').style.display = musik ? '' : 'none';
+  if (musik) renderSongs();
+}
+$('#mehr-mode').addEventListener('click', e => {
+  const b = e.target.closest('[data-mm]'); if (!b) return;
+  mehrMode = b.dataset.mm;
+  document.querySelectorAll('#mehr-mode button').forEach(x => x.classList.toggle('on', x === b));
+  renderMehr(); vibrate();
+});
+document.addEventListener('click', e => {
+  const sc = e.target.closest('[data-song]');
+  if (sc) sheetSong(S.songs.find(x => x.id === sc.dataset.song));
+});
+
+/* --- Sprachmemos (IndexedDB, Audio bleibt nur auf dem Gerät) --- */
+function memoDb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('yanapp-media', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('memos', { keyPath: 'id' });
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+async function memoAdd(m) { const db = await memoDb(); return new Promise((res, rej) => { const tx = db.transaction('memos', 'readwrite'); tx.objectStore('memos').put(m); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); }
+async function memoDel(id) { const db = await memoDb(); return new Promise(res => { const tx = db.transaction('memos', 'readwrite'); tx.objectStore('memos').delete(id); tx.oncomplete = res; }); }
+async function memoAll(songId) {
+  const db = await memoDb();
+  return new Promise(res => {
+    const out = [];
+    const c = db.transaction('memos').objectStore('memos').openCursor();
+    c.onsuccess = e => { const cur = e.target.result; if (cur) { if (cur.value.songId === songId) out.push(cur.value); cur.continue(); } else res(out.sort((a, b) => b.ts - a.ts)); };
+  });
+}
+let recMedia = null, recChunks = [], recStream = null, memoAudio = null;
+
+/* --- PDF-Songsheet (ohne Fremdbibliothek, offline) --- */
+function pdfText(s) {
+  let out = '';
+  for (const ch of String(s)) { const c = ch.codePointAt(0); out += (c >= 32 && c <= 255) ? ch : '?'; }
+  return out.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+}
+function wrap(s, n) {
+  const words = String(s).split(/\s+/); const lines = []; let cur = '';
+  words.forEach(w => { if ((cur + ' ' + w).trim().length > n) { if (cur) lines.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); });
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [''];
+}
+function songPdf(song) {
+  const pages = []; let items = []; let y = 792;
+  const put = (txt, font, size, gap) => {
+    if (y < 60) { pages.push(items); items = []; y = 792; }
+    items.push({ txt, font, size, y });
+    y -= size * (gap || 1.5);
+  };
+  put(song.title || 'Ohne Titel', 'F2', 20, 1.3);
+  const meta = [song.key ? 'Tonart: ' + song.key : '', song.bpm ? song.bpm + ' BPM' : '', SONG_STATUS[song.status] || ''].filter(Boolean).join('   ·   ');
+  if (meta) put(meta, 'F1', 10, 1.6);
+  put('', 'F1', 8);
+  (song.sections || []).forEach(sec => {
+    put('[' + (sec.type || 'Part').toUpperCase() + ']', 'F2', 12, 1.5);
+    if (sec.chords) wrap(sec.chords, 70).forEach(l => put(l, 'F3', 11, 1.4));
+    (sec.lyrics || '').split('\n').forEach(line => wrap(line || ' ', 80).forEach(l => put(l, 'F1', 11, 1.45)));
+    put('', 'F1', 7);
+  });
+  if (song.notes) {
+    put('NOTIZEN', 'F2', 12, 1.5);
+    song.notes.split('\n').forEach(line => wrap(line || ' ', 85).forEach(l => put(l, 'F1', 10, 1.45)));
+  }
+  pages.push(items);
+
+  const objs = [];
+  const fontObjIdx = 3 + pages.length * 2; // nach Katalog, Pages, Seiten+Streams
+  const kids = pages.map((_, i) => (3 + i * 2) + ' 0 R').join(' ');
+  objs.push('<< /Type /Catalog /Pages 2 0 R >>');
+  objs.push(`<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>`);
+  pages.forEach((pg, i) => {
+    const streamIdx = 4 + i * 2;
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents ${streamIdx} 0 R /Resources << /Font << /F1 ${fontObjIdx} 0 R /F2 ${fontObjIdx + 1} 0 R /F3 ${fontObjIdx + 2} 0 R >> >> >>`);
+    const content = pg.map(it => `BT /${it.font} ${it.size} Tf 50 ${Math.round(it.y)} Td (${pdfText(it.txt)}) Tj ET`).join('\n');
+    objs.push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+  });
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>');
+
+  let pdf = '%PDF-1.4\n';
+  const offsets = [];
+  objs.forEach((o, i) => { offsets.push(pdf.length); pdf += (i + 1) + ' 0 obj\n' + o + '\nendobj\n'; });
+  const xref = pdf.length;
+  pdf += 'xref\n0 ' + (objs.length + 1) + '\n0000000000 65535 f \n' + offsets.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('');
+  pdf += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  const bytes = new Uint8Array(pdf.length);
+  for (let i = 0; i < pdf.length; i++) bytes[i] = pdf.charCodeAt(i) & 0xFF;
+  return bytes;
+}
+function downloadSongPdf(song) {
+  const blob = new Blob([songPdf(song)], { type: 'application/pdf' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (song.title || 'song').replace(/[^\wäöüÄÖÜß \-]/g, '').trim().replace(/\s+/g, '-') + '.pdf';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('Songsheet exportiert 📄');
+}
+
+/* --- Song-Editor --- */
+function sheetSong(s) {
+  const isNew = !s;
+  const tmp = isNew
+    ? { id: uid(), title: '', status: 'idee', key: '', bpm: '', sections: [{ id: uid(), type: 'Verse', chords: '', lyrics: '' }], notes: '', createdAt: Date.now() }
+    : s;
+  openSheet(`
+    <h3>${isNew ? 'Neuer Song' : 'Song bearbeiten'}</h3>
+    <div class="f-label">Titel</div>
+    <input class="f-input" id="sg-title" placeholder="Songtitel…" value="${esc(tmp.title)}">
+    <div class="f-row" style="margin-top:10px">
+      <div><div class="f-label" style="margin-top:0">Tonart</div><input class="f-input" id="sg-key" placeholder="z. B. Am" value="${esc(tmp.key || '')}"></div>
+      <div><div class="f-label" style="margin-top:0">BPM</div><input class="f-input" id="sg-bpm" type="number" inputmode="numeric" placeholder="120" value="${esc(String(tmp.bpm || ''))}"></div>
+    </div>
+    <div class="f-label">Status</div>
+    <div class="chip-row" id="sg-status">
+      ${Object.entries(SONG_STATUS).map(([k, v]) => `<button class="chip ${tmp.status === k ? 'on' : ''}" data-st="${k}">${v}</button>`).join('')}
+    </div>
+    <div class="f-label">Song-Parts</div>
+    <div id="sg-secs"></div>
+    <div class="chip-row" id="sg-add-sec" style="margin-top:10px">
+      ${SEC_TYPES.map(t => `<button class="chip" data-sec="${t}">＋ ${t}</button>`).join('')}
+    </div>
+    <div class="f-label">Sprachmemos</div>
+    <div id="sg-memos"></div>
+    <button class="rec-btn" id="sg-rec">${icon('mic')} Memo aufnehmen</button>
+    <div class="f-label">Notizen zum Song</div>
+    <textarea class="f-area" id="sg-notes" placeholder="Ideen, Referenzen, Produktions-Notizen…">${esc(tmp.notes || '')}</textarea>
+    <button class="btn btn-primary" id="sg-save">${isNew ? 'Song anlegen' : 'Speichern'}</button>
+    ${isNew ? '' : `<button class="btn" style="background:var(--lime);color:#131316;margin-top:8px" id="sg-pdf">${icon('picture_as_pdf')} Als PDF exportieren</button>`}
+    ${isNew ? '' : '<button class="btn btn-ghost-danger" id="sg-del">Song löschen</button>'}
+  `);
+  let status = tmp.status;
+  $('#sg-status').addEventListener('click', e => {
+    const b = e.target.closest('[data-st]'); if (!b) return;
+    status = b.dataset.st;
+    document.querySelectorAll('#sg-status .chip').forEach(c => c.classList.toggle('on', c === b));
+  });
+  function renderSecs() {
+    $('#sg-secs').innerHTML = tmp.sections.map((sec, i) => `
+      <div class="sec-card">
+        <div class="sec-head">
+          <span class="sec-type">${esc(sec.type)}</span>
+          <button class="ms-del" data-sdel="${i}">✕</button>
+        </div>
+        <input class="sec-chords" data-schords="${i}" placeholder="Akkorde: Am  F  C  G" value="${esc(sec.chords || '')}" autocapitalize="off">
+        <textarea class="sec-lyrics" data-slyrics="${i}" placeholder="Lyrics…">${esc(sec.lyrics || '')}</textarea>
+      </div>`).join('');
+    $('#sg-secs').querySelectorAll('[data-sdel]').forEach(b => b.addEventListener('click', () => {
+      syncSecs(); tmp.sections.splice(+b.dataset.sdel, 1); renderSecs();
+    }));
+  }
+  function syncSecs() {
+    $('#sg-secs').querySelectorAll('[data-schords]').forEach(el => { tmp.sections[+el.dataset.schords].chords = el.value; });
+    $('#sg-secs').querySelectorAll('[data-slyrics]').forEach(el => { tmp.sections[+el.dataset.slyrics].lyrics = el.value; });
+  }
+  renderSecs();
+  $('#sg-add-sec').addEventListener('click', e => {
+    const b = e.target.closest('[data-sec]'); if (!b) return;
+    syncSecs(); tmp.sections.push({ id: uid(), type: b.dataset.sec, chords: '', lyrics: '' }); renderSecs();
+    vibrate();
+  });
+  // Memos
+  async function renderMemos() {
+    const memos = await memoAll(tmp.id);
+    $('#sg-memos').innerHTML = memos.length ? memos.map(m => `
+      <div class="memo-row">
+        <button class="memo-play" data-mplay="${m.id}"><span class="msr">${ICON.play_arrow}</span></button>
+        <span class="memo-name">${new Date(m.ts).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}, ${new Date(m.ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr</span>
+        <button class="memo-del" data-mdel="${m.id}">✕</button>
+      </div>`).join('') : '<div style="font-size:13px;color:var(--text-3);padding:4px 0 8px">Noch keine Memos – summ deine Melodie einfach ein.</div>';
+    $('#sg-memos').querySelectorAll('[data-mplay]').forEach(b => b.addEventListener('click', async () => {
+      const m = memos.find(x => x.id === b.dataset.mplay);
+      if (memoAudio) { memoAudio.pause(); memoAudio = null; }
+      memoAudio = new Audio(URL.createObjectURL(m.blob));
+      memoAudio.play();
+    }));
+    $('#sg-memos').querySelectorAll('[data-mdel]').forEach(b => b.addEventListener('click', async () => {
+      await memoDel(b.dataset.mdel); renderMemos(); toast('Memo gelöscht');
+    }));
+  }
+  renderMemos();
+  $('#sg-rec').addEventListener('click', async () => {
+    const btn = $('#sg-rec');
+    if (recMedia && recMedia.state === 'recording') {
+      recMedia.stop(); return;
+    }
+    try {
+      recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recChunks = [];
+      recMedia = new MediaRecorder(recStream);
+      recMedia.ondataavailable = e => recChunks.push(e.data);
+      recMedia.onstop = async () => {
+        recStream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(recChunks, { type: recMedia.mimeType || 'audio/mp4' });
+        await memoAdd({ id: uid(), songId: tmp.id, blob, ts: Date.now() });
+        btn.classList.remove('rec');
+        btn.innerHTML = icon('mic') + ' Memo aufnehmen';
+        renderMemos(); toast('Memo gespeichert 🎙️'); vibrate();
+      };
+      recMedia.start();
+      btn.classList.add('rec');
+      btn.innerHTML = icon('stop') + ' Aufnahme läuft – tippen zum Stoppen';
+      vibrate();
+    } catch (e) { toast('Mikrofon nicht verfügbar – Berechtigung prüfen'); }
+  });
+  // Speichern / PDF / Löschen
+  $('#sg-save').addEventListener('click', () => {
+    syncSecs();
+    tmp.title = $('#sg-title').value.trim() || 'Ohne Titel';
+    tmp.key = $('#sg-key').value.trim();
+    tmp.bpm = $('#sg-bpm').value.trim();
+    tmp.status = status;
+    tmp.notes = $('#sg-notes').value.trim();
+    tmp.updatedAt = Date.now();
+    if (isNew) { S.songs.push(tmp); toast('Song angelegt 🎵'); }
+    else toast('Gespeichert');
+    save(); closeSheet(); renderMehr();
+  });
+  if (!isNew) {
+    $('#sg-pdf').addEventListener('click', () => {
+      syncSecs();
+      tmp.title = $('#sg-title').value.trim() || 'Ohne Titel';
+      tmp.key = $('#sg-key').value.trim(); tmp.bpm = $('#sg-bpm').value.trim();
+      tmp.notes = $('#sg-notes').value.trim();
+      downloadSongPdf(tmp);
+    });
+    $('#sg-del').addEventListener('click', () => {
+      S.songs = S.songs.filter(x => x.id !== tmp.id);
+      save(); closeSheet(); renderMehr(); toast('Song gelöscht');
+    });
+  }
+}
 
 /* ================= Sheets: Aufgabe ================= */
 function sheetTask(t) {
@@ -2165,7 +2475,7 @@ $('#fab-mic').addEventListener('click', () => { vibrate(); openCapture(); });
 $('#fab').addEventListener('click', () => {
   vibrate();
   if (currentTab === 'kalender') sheetEvent(null, selDay);
-  else if (currentTab === 'mehr') sheetNote(null);
+  else if (currentTab === 'mehr') { mehrMode === 'musik' ? sheetSong(null) : sheetNote(null); }
   else if (currentTab === 'ziele') sheetChooseGoal();
   else sheetTask(null);
 });
@@ -2368,7 +2678,7 @@ document.addEventListener('click', e => {
 
 /* ================= Render all ================= */
 function renderAll() {
-  renderHome(); renderCal(); renderTasks(); renderNotes(); renderZiele(); updateBadge();
+  renderHome(); renderCal(); renderTasks(); renderNotes(); renderMehr(); renderZiele(); updateBadge();
 }
 /* Echte sichtbare Höhe messen (iOS-Toolbar/Viewport-Bug) */
 let lastVH = 0;
