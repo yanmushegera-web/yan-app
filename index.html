@@ -1074,12 +1074,12 @@ let homeFilter = null;
 function evCardHtml(e, i) {
   const c = catById(e.cat);
   const tm = e.time ? e.time.split(':') : null;
-  return `<div class="ev-card ${['hl', 'c-lime', 'c-lav'][i % 3]}" data-ev="${e.id}">
-    <div class="ev-card-cat">${c ? icon(c.icon) + ' ' + esc(c.label.split(' ')[0]) : icon('flag')}</div>
-    <button class="ev-go"><span class="msr"></span></button>
+  return `<div class="ev-card ${['hl', 'c-lime', 'c-lav'][i % 3]}" ${e.ext ? '' : `data-ev="${e.id}"`}>
+    <div class="ev-card-cat">${e.ext ? icon('calendar_month') + ' ' + esc(SRC_LABEL[e.src] || 'Kalender') : (c ? icon(c.icon) + ' ' + esc(c.label.split(' ')[0]) : icon('flag'))}</div>
+    ${e.ext ? '' : `<button class="ev-go"><span class="msr"></span></button>`}
     <div class="ev-card-title">${esc(e.title)}</div>
     <div class="ev-card-time">${tm ? `${esc(tm[0])}:<span>${esc(tm[1])}</span>` : '—'}</div>
-    <div class="ev-card-day">${esc(relDay(e.date))}</div>
+    <div class="ev-card-day">${esc(relDay(e.date))}${e.loc ? ' · ' + esc(e.loc) : ''}</div>
   </div>`;
 }
 function renderHome() {
@@ -1092,11 +1092,11 @@ function renderHome() {
   $('#avatar').textContent = (S.name || 'Y').trim().charAt(0).toUpperCase();
 
   const t = todayIso();
-  const evToday = S.events.filter(e => e.date === t);
+  const nEvToday = S.events.filter(e => e.date === t).length + extOn(t).length;
   const open = S.tasks.filter(x => !x.done);
-  $('#hero-sub').textContent = evToday.length === 0 && open.length === 0
+  $('#hero-sub').textContent = nEvToday === 0 && open.length === 0
     ? 'Alles frei – genieß den Tag ✨'
-    : `${evToday.length} Termin${evToday.length === 1 ? '' : 'e'} · ${open.length} offene Aufgabe${open.length === 1 ? '' : 'n'}`;
+    : `${nEvToday} Termin${nEvToday === 1 ? '' : 'e'} · ${open.length} offene Aufgabe${open.length === 1 ? '' : 'n'}`;
 
   // Filter-Pills (nur Bereiche, in denen es etwas gibt)
   const usedCats = new Set([...S.events, ...S.tasks].map(x => x.cat).filter(Boolean));
@@ -1106,9 +1106,11 @@ function renderHome() {
       `<button class="cat-chip ${homeFilter === c.id ? 'on' : ''}" data-hf="${c.id}">${icon(c.icon)} ${esc(c.label.split(' ')[0])}</button>`
     ).join('');
 
-  // Termine als Karten-Raster (heute + demnächst, max 4)
-  const upcoming = S.events
-    .filter(e => e.date >= t && (!homeFilter || e.cat === homeFilter))
+  // Termine als Karten-Raster (heute + demnächst, eigene + Google, max 4)
+  const upcoming = [
+    ...S.events.filter(e => e.date >= t && (!homeFilter || e.cat === homeFilter)),
+    ...(!homeFilter ? EXT.filter(e => e.date >= t).map(e => ({ ...e, ext: true })) : [])
+  ]
     .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')))
     .slice(0, 4);
   $('#home-events').innerHTML = upcoming.length
@@ -1165,13 +1167,17 @@ function renderCal() {
     if (d.getMonth() !== m) cls.push('other');
     if (dIso === todayIso()) cls.push('today');
     if (dIso === selDay) cls.push('sel');
-    const dots = evs.slice(0,3).map(e => `<span class="dot" style="background:${dIso===selDay?'#fff':e.color}"></span>`).join('');
+    const dotCols = [...evs.map(e => e.color), ...extOn(dIso).map(() => 'var(--lav)')];
+    const dots = dotCols.slice(0,3).map(col => `<span class="dot" style="background:${dIso===selDay?'var(--pill-text)':col}"></span>`).join('');
     cells.push(`<button class="${cls.join(' ')}" data-day="${dIso}">${d.getDate()}${evs.length?`<span class="dots">${dots}</span>`:''}</button>`);
   }
   $('#cal-grid').innerHTML = cells.join('');
   $('#sel-day-title').innerHTML = `${esc(relDay(selDay))} <span class="mini-link" id="add-ev-day">+ Termin</span>`;
-  const dayEvs = S.events.filter(e => e.date === selDay).sort((a,b) => (a.time||'').localeCompare(b.time||''));
-  $('#day-events').innerHTML = dayEvs.length ? dayEvs.map(evRowHtml).join('')
+  const dayEvs = [
+    ...S.events.filter(e => e.date === selDay).map(e => ({ t: e.time || '', h: evRowHtml(e) })),
+    ...extOn(selDay).map(e => ({ t: e.time || '', h: extRowHtml(e) }))
+  ].sort((a, b) => a.t.localeCompare(b.t));
+  $('#day-events').innerHTML = dayEvs.length ? dayEvs.map(x => x.h).join('')
     : '<div class="empty"><span class="e-icon msr"></span>Keine Termine an diesem Tag</div>';
 }
 function evRowHtml(e) {
@@ -1193,7 +1199,10 @@ $('#cal-grid').addEventListener('click', e => {
 document.addEventListener('click', e => {
   if (e.target.id === 'add-ev-day') sheetEvent(null, selDay);
   const row = e.target.closest('[data-ev]');
-  if (row) sheetEvent(S.events.find(x => x.id === row.dataset.ev));
+  if (row) {
+    const ev = S.events.find(x => x.id === row.dataset.ev);
+    if (ev) sheetEvent(ev);
+  }
 });
 
 /* ================= AUFGABEN ================= */
@@ -1505,6 +1514,11 @@ $('#btn-settings').addEventListener('click', () => {
     <div class="f-label">Erinnerungen</div>
     <button class="chip" id="set-notify" style="width:100%;text-align:center;padding:11px">${('Notification' in window && Notification.permission === 'granted') ? '🔔 Benachrichtigungen aktiv' : '🔔 Benachrichtigungen aktivieren'}</button>
     <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">Erinnert dich an fällige Aufgaben mit Uhrzeit und an Termine (30 Min. vorher), solange die App installiert ist.</div>
+    <div class="f-label">Kalender-Sync (Google & Arbeit)</div>
+    <input class="f-input" type="password" id="set-caltoken" placeholder="Sync-Schlüssel (github_pat_…)" autocapitalize="off" autocorrect="off" value="${esc(S.calToken || '')}">
+    <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">
+      Verbindet deine Kalender (schreibgeschützt, aktualisiert alle ~20 Min). Der Schlüssel bleibt nur auf deinem Gerät.
+    </div>
     <div class="f-label">Daten</div>
     <div class="f-row">
       <button class="chip" id="set-export" style="text-align:center;padding:11px"><span class="msr"></span> Backup exportieren</button>
@@ -1561,8 +1575,12 @@ $('#btn-settings').addEventListener('click', () => {
   $('#set-save').addEventListener('click', () => {
     S.name = $('#set-name').value.trim() || 'Yan';
     S.apiKey = $('#set-apikey').value.trim() || null;
+    const newCalToken = $('#set-caltoken').value.trim() || null;
+    const calChanged = newCalToken !== S.calToken;
+    S.calToken = newCalToken;
     save(); applyTheme(); closeSheet(); renderAll();
-    toast(S.apiKey ? 'Gespeichert – KI-Analyse aktiv 🧠' : 'Gespeichert');
+    if (calChanged && S.calToken) { toast('Kalender wird verbunden …'); syncExternal(true).then(() => toast(EXT.length ? `${EXT.length} Termine synchronisiert 📅` : 'Verbunden – noch keine Termine gefunden')); }
+    else toast(S.apiKey ? 'Gespeichert – KI-Analyse aktiv 🧠' : 'Gespeichert');
   });
 });
 
@@ -2120,6 +2138,40 @@ $('#fab').addEventListener('click', () => {
   else sheetTask(null);
 });
 
+/* ================= Externe Kalender (Google & Co. via Sync-Repo) ================= */
+const CAL_DATA_URL = 'https://api.github.com/repos/yanmushegera-web/yan-data/contents/events.json';
+const SRC_LABEL = { google: 'Google', outlook: 'Arbeit' };
+let EXT = store.get('yanapp_ext', []);
+let extLastSync = 0;
+async function syncExternal(force) {
+  if (!S.calToken) return;
+  if (!force && Date.now() - extLastSync < 5 * 60 * 1000) return;
+  try {
+    const res = await fetch(CAL_DATA_URL, {
+      headers: { authorization: 'Bearer ' + S.calToken, accept: 'application/vnd.github.raw+json' },
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      EXT = data; extLastSync = Date.now();
+      store.set('yanapp_ext', EXT);
+      renderAll();
+    }
+  } catch (e) { /* offline oder Token-Problem – Cache bleibt */ }
+}
+function extOn(dateIso) { return EXT.filter(e => e.date === dateIso); }
+function extRowHtml(e) {
+  return `<div class="ev-row ext">
+    <div class="ev-bar" style="background:var(--lav)"></div>
+    <div class="ev-time">${e.time ? esc(e.time) : '—'}</div>
+    <div class="ev-main">
+      <div class="ev-title">${esc(e.title)} <span class="cat-tag" style="background:var(--lav);color:#131316">${icon('calendar_month')} ${esc(SRC_LABEL[e.src] || 'Kalender')}</span></div>
+      ${e.loc ? `<div class="ev-notes">${esc(e.loc)}</div>` : ''}
+    </div></div>`;
+}
+setInterval(() => syncExternal(false), 10 * 60 * 1000);
+
 /* ================= Erinnerungen & App-Badge ================= */
 function nowHM() { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
 function notify(title, body) {
@@ -2306,8 +2358,9 @@ setInterval(fitVH, 1000); // Drift-Absicherung (iOS meldet Höhe teils erst spä
 applyTheme();
 renderAll();
 checkReminders();
+syncExternal(true);
 setInterval(() => { if (currentTab === 'heute') renderHome(); }, 60000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderAll(); checkReminders(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderAll(); checkReminders(); syncExternal(false); } });
 
 /* ================= Service Worker (nur gehostet) ================= */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
