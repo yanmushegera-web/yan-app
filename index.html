@@ -608,6 +608,91 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ═══════════ V6 — Referenz-Layout ═══════════ */
+/* Farb-Blobs wie im Referenzbild (Lime + Violett, weich verlaufend) */
+.blob { position: absolute; pointer-events: none; z-index: 0; filter: blur(52px); }
+.blob-lime { top: -70px; left: -50px; width: 380px; height: 320px; background: radial-gradient(closest-side, var(--lime), transparent 72%); opacity: .65; }
+.blob-lav { top: 40px; right: -110px; width: 300px; height: 300px; background: radial-gradient(closest-side, var(--lav), transparent 72%); opacity: .5; }
+[data-theme="dark"] .blob-lime { opacity: .2; }
+[data-theme="dark"] .blob-lav { opacity: .16; }
+.lime-glow { display: none; }
+
+/* Profil-Kopfzeile mit Avatar */
+.prof-row { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+.prof-l { display: flex; align-items: center; gap: 12px; }
+.avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--lav) 0%, var(--lime) 130%);
+  color: #131316; font-size: 22px; font-weight: 800;
+  display: grid; place-items: center;
+  box-shadow: 0 6px 16px rgba(19,19,22,.14);
+}
+.hey-hi { font-size: 13.5px; font-weight: 500; color: var(--text-2); }
+.hey-name { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.icon-btn { background: transparent; box-shadow: none; border: none; font-size: 20px; }
+
+/* Datum noch größer, Typo-Kontrast wie Referenz */
+.big-date { font-size: 76px; font-weight: 800; letter-spacing: -.05em; line-height: 1; margin-top: 22px; }
+.big-day { font-size: 30px; font-weight: 500; color: var(--text); opacity: .92; margin-top: 2px; }
+.day-sub { margin: 8px 0 16px; }
+
+/* Filter-Pills unter dem Datum */
+.home-filter { position: relative; z-index: 1; margin-bottom: 16px; }
+.home-filter .cat-chip { background: var(--card); border-color: transparent; box-shadow: var(--shadow); padding: 9px 16px; font-size: 13.5px; }
+.home-filter .cat-chip.on { background: var(--pill); color: var(--pill-text); }
+
+/* Sektions-Titel: kein Uppercase mehr, kräftig wie Referenz */
+.card-title { text-transform: none; letter-spacing: -.01em; font-size: 17px; color: var(--text); font-weight: 800; margin-bottom: 14px; }
+.card-title .mini-link { font-size: 13.5px; font-weight: 600; }
+
+/* Termin-Karten: 2-spaltig, große Uhrzeit wie „18:15" im Referenzbild */
+.ev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ev-card {
+  background: var(--card-2); border-radius: 20px; padding: 14px 14px 12px;
+  cursor: pointer; position: relative; border: 1px solid var(--line);
+  transition: transform .12s ease;
+}
+.ev-card:active { transform: scale(.96); }
+.ev-card.hl { background: var(--card); box-shadow: var(--shadow); }
+.ev-card-cat { font-size: 11.5px; font-weight: 700; margin-bottom: 8px; display: inline-flex; align-items: center; gap: 4px; color: var(--text-2); }
+.ev-card-title { font-size: 14.5px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-card-time { font-size: 30px; font-weight: 800; letter-spacing: -.03em; margin-top: 2px; }
+.ev-card-time span { color: var(--text-3); font-weight: 700; }
+.ev-card-day { font-size: 12px; font-weight: 600; color: var(--text-2); margin-top: 2px; }
+.ev-card .ev-go {
+  position: absolute; top: 12px; right: 12px;
+  width: 30px; height: 30px; border-radius: 10px;
+  background: var(--lav); color: #131316; border: none;
+  display: grid; place-items: center; font-size: 14px; pointer-events: none;
+}
+
+/* Segment-Filter (Aufgaben) als lose Pills wie Referenz-Chips */
+.seg { background: transparent; box-shadow: none; border: none; padding: 0; gap: 8px; }
+.seg button { background: var(--card); box-shadow: var(--shadow); flex: 0 1 auto; padding: 10px 18px; }
+.seg button.on { background: var(--pill); color: var(--pill-text); }
+
+/* Sheets: dunkle Karte mit Lavendel-CTA wie die „Buy"-Karte im Referenzbild */
+.sheet {
+  --card: #232329; --card-2: #2A2A31; --text: #F4F3EC; --text-2: #A6A6AE; --text-3: #6E6E76;
+  --line: rgba(244,243,236,.09); --accent-soft: rgba(188,167,250,.18);
+  --pill: #F4F3EC; --pill-text: #131316;
+  background: #17171B; color: var(--text);
+  border-radius: 32px 32px 0 0;
+  box-shadow: 0 -14px 50px rgba(0,0,0,.4);
+}
+.sheet .grip { background: #6E6E76; }
+.sheet .f-input, .sheet .f-area { border-color: transparent; }
+.sheet h3 { color: #F4F3EC; }
+.sheet .btn-primary { box-shadow: 0 10px 26px rgba(188,167,250,.3); }
+.sheet .color-dot.on { border-color: #F4F3EC; }
+.sheet .prop-card { background: #1E1E23; border-color: rgba(244,243,236,.08); }
+.sheet .cap-live { background: #2A2A31; }
+.sheet .choose-btn { background: #1E1E23; border-color: rgba(244,243,236,.08); }
+.sheet .ms-add button { background: var(--lav); color: #131316; }
+
+/* Toast leicht anheben über der Pill-Nav */
+.toast { bottom: calc(var(--sab) + 96px); }
 </style>
 </head>
 <body>
@@ -616,19 +701,22 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 
     <!-- ===== HEUTE ===== -->
     <section class="view active" id="view-heute">
-      <div class="lime-glow"></div>
-      <div class="hey-row">
-        <div class="hey" id="greeting">Hey!</div>
+      <div class="blob blob-lime"></div>
+      <div class="blob blob-lav"></div>
+      <div class="prof-row">
+        <div class="prof-l">
+          <div class="avatar" id="avatar">Y</div>
+          <div>
+            <div class="hey-hi" id="hey-hi">Hey</div>
+            <div class="hey-name" id="hey-name">Yan</div>
+          </div>
+        </div>
         <button class="icon-btn" id="btn-settings" aria-label="Einstellungen">⚙︎</button>
       </div>
       <div class="big-date" id="big-date"></div>
       <div class="big-day" id="big-day"></div>
       <div class="day-sub" id="hero-sub"></div>
-      <div class="stats-row">
-        <div class="stat-mini"><b id="stat-events">0</b><span>Termine heute</span></div>
-        <div class="stat-mini"><b id="stat-tasks">0</b><span>Offen</span></div>
-        <div class="stat-mini limed"><b id="stat-done">0</b><span>Erledigt</span></div>
-      </div>
+      <div class="cat-scroll home-filter" id="home-filter"></div>
 
       <div class="card" id="home-habits-card" style="display:none">
         <div class="card-title">Gewohnheiten heute <span class="mini-link" data-goto="ziele">Alle ›</span></div>
@@ -650,10 +738,6 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
         <div id="home-tasks"></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Schnellzugriff <span class="mini-link" data-goto="mehr">Alle ›</span></div>
-        <div class="links-hscroll" id="home-links"></div>
-      </div>
     </section>
 
     <!-- ===== KALENDER ===== -->
@@ -886,6 +970,8 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-goto]');
   if (g) switchTab(g.dataset.goto);
+  const hf = e.target.closest('[data-hf]');
+  if (hf) { homeFilter = hf.dataset.hf || null; vibrate(); renderHome(); }
 });
 
 /* ================= Sheet ================= */
@@ -904,36 +990,56 @@ function closeSheet() {
 $('#backdrop').addEventListener('click', closeSheet);
 
 /* ================= HEUTE ================= */
+let homeFilter = null;
+function evCardHtml(e, i) {
+  const c = catById(e.cat);
+  const tm = e.time ? e.time.split(':') : null;
+  return `<div class="ev-card ${i === 0 ? 'hl' : ''}" data-ev="${e.id}">
+    <div class="ev-card-cat">${c ? c.icon + ' ' + esc(c.label.split(' ')[0]) : '📌'}</div>
+    <button class="ev-go">›</button>
+    <div class="ev-card-title">${esc(e.title)}</div>
+    <div class="ev-card-time">${tm ? `${esc(tm[0])}:<span>${esc(tm[1])}</span>` : '—'}</div>
+    <div class="ev-card-day">${esc(relDay(e.date))}</div>
+  </div>`;
+}
 function renderHome() {
   const now = new Date();
   $('#big-date').textContent = pad(now.getDate()) + '.' + pad(now.getMonth() + 1);
   $('#big-day').textContent = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'][now.getDay()];
   const h = now.getHours();
-  const g = h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 18 ? 'Hey' : 'Guten Abend';
-  $('#greeting').innerHTML = esc(g) + (S.name ? ', <b>' + esc(S.name) + '</b>' : '') + ' 👋';
+  $('#hey-hi').textContent = h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 18 ? 'Hey' : 'Guten Abend';
+  $('#hey-name').textContent = S.name || 'Yan';
+  $('#avatar').textContent = (S.name || 'Y').trim().charAt(0).toUpperCase();
 
   const t = todayIso();
-  const evToday = S.events.filter(e => e.date === t).sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  const evToday = S.events.filter(e => e.date === t);
   const open = S.tasks.filter(x => !x.done);
-  const doneToday = S.tasks.filter(x => x.done && x.doneAt === t);
-  countUp($('#stat-events'), evToday.length);
-  countUp($('#stat-tasks'), open.length);
-  countUp($('#stat-done'), doneToday.length);
   $('#hero-sub').textContent = evToday.length === 0 && open.length === 0
     ? 'Alles frei – genieß den Tag ✨'
     : `${evToday.length} Termin${evToday.length === 1 ? '' : 'e'} · ${open.length} offene Aufgabe${open.length === 1 ? '' : 'n'}`;
 
-  // next events (today + upcoming, max 3)
-  const upcoming = S.events.filter(e => e.date >= t).sort((a,b) => (a.date + (a.time||'')).localeCompare(b.date + (b.time||''))).slice(0, 3);
-  $('#home-events').innerHTML = upcoming.length ? upcoming.map(evRowHtml).join('')
+  // Filter-Pills (nur Bereiche, in denen es etwas gibt)
+  const usedCats = new Set([...S.events, ...S.tasks].map(x => x.cat).filter(Boolean));
+  $('#home-filter').innerHTML =
+    `<button class="cat-chip ${!homeFilter ? 'on' : ''}" data-hf="">Alle</button>` +
+    CATS.filter(c => usedCats.has(c.id)).map(c =>
+      `<button class="cat-chip ${homeFilter === c.id ? 'on' : ''}" data-hf="${c.id}">${c.icon} ${esc(c.label.split(' ')[0])}</button>`
+    ).join('');
+
+  // Termine als Karten-Raster (heute + demnächst, max 4)
+  const upcoming = S.events
+    .filter(e => e.date >= t && (!homeFilter || e.cat === homeFilter))
+    .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')))
+    .slice(0, 4);
+  $('#home-events').innerHTML = upcoming.length
+    ? `<div class="ev-grid">${upcoming.map(evCardHtml).join('')}</div>`
     : '<div class="empty"><span class="e-icon">🗓️</span>Keine anstehenden Termine</div>';
 
-  // tasks due (overdue + today first, max 4)
-  const sorted = open.slice().sort((a,b) => (a.due || '9999') < (b.due || '9999') ? -1 : 1).slice(0, 4);
+  // Aufgaben (überfällig/heute zuerst, max 4)
+  const sorted = open.filter(x => !homeFilter || x.cat === homeFilter)
+    .sort((a, b) => (a.due || '9999') < (b.due || '9999') ? -1 : 1).slice(0, 4);
   $('#home-tasks').innerHTML = sorted.length ? sorted.map(taskRowHtml).join('')
     : '<div class="empty"><span class="e-icon">🎉</span>Keine offenen Aufgaben</div>';
-
-  $('#home-links').innerHTML = S.links.map(linkTileHtml).join('');
 
   // Gewohnheiten heute
   const hc = $('#home-habits-card');
