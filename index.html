@@ -78,7 +78,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   position: absolute; inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: calc(var(--sat) + 14px) 18px calc(var(--sab) + 110px);
+  padding: calc(var(--sat) + 14px) 18px calc(var(--sab) + 84px);
   opacity: 0; transform: translateY(6px) scale(.995);
   pointer-events: none;
   transition: opacity .22s ease, transform .22s ease;
@@ -399,6 +399,14 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .choose-t b { display: block; font-size: 15.5px; font-weight: 700; color: var(--text); }
 .choose-t span { font-size: 12.5px; color: var(--text-2); font-weight: 500; }
 
+/* Kalender: Tage mit Terminen + Wochenansicht */
+.cal-day.has { background: var(--lime); color: #131316; font-weight: 800; }
+[data-theme="dark"] .cal-day.has { background: rgba(217,242,79,.2); color: var(--lime); }
+.cal-day.has .dot { background: #131316; }
+[data-theme="dark"] .cal-day.has .dot { background: var(--lime); }
+.cal-day.sel.has { background: var(--pill); color: var(--pill-text); }
+.cal-grid.week .cal-day { aspect-ratio: auto; padding: 14px 0 16px; }
+
 /* ---------- Mic FAB ---------- */
 .fab-mic {
   position: fixed; right: 18px; bottom: calc(var(--sab) + 150px); z-index: 41;
@@ -495,7 +503,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 /* Viewport-Fix: App misst ihre sichtbare Höhe selbst (--vh per JS),
    alle unteren Elemente hängen absolut an der ECHTEN Unterkante */
 html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 100%; overscroll-behavior: none; }
-#app { position: fixed; top: 0; left: 0; right: 0; height: var(--vh, 100dvh); }
+#app { position: fixed; top: 0; left: 0; right: 0; height: 100dvh; }
+@supports not (height: 100dvh) { #app { height: var(--vh, 100vh); } }
 .tabbar, .fab, .fab-mic, .sheet, .toast { position: absolute; }
 .sheet-backdrop { position: absolute; inset: 0; }
 
@@ -535,15 +544,15 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
 /* Dunkle Tab-Leiste, fest an der Unterkante angedockt */
 .tabbar {
   left: 0; right: 0; bottom: 0;
-  border-radius: 26px 26px 0 0; border: none;
+  border-radius: 22px 22px 0 0; border: none;
   background: var(--nav-bg);
   backdrop-filter: saturate(160%) blur(18px);
   -webkit-backdrop-filter: saturate(160%) blur(18px);
-  padding: 12px 12px calc(var(--sab) + 6px);
+  padding: 7px 10px calc(var(--sab) * 0.6);
   box-shadow: 0 -10px 34px rgba(19,19,22,.22);
 }
 [data-theme="dark"] .tabbar { box-shadow: 0 14px 38px rgba(0,0,0,.5); border: 1px solid var(--line); }
-.tab { color: #86868E; padding: 5px 12px; }
+.tab { color: #86868E; padding: 3px 10px; font-size: 10px; gap: 3px; }
 .tab.on { color: #FAFAF5; }
 [data-theme="dark"] .tab.on { color: #F4F3EC; }
 .tab.on .t-ic { animation: tabBounce .3s cubic-bezier(.34,1.56,.64,1); }
@@ -553,12 +562,12 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
 /* FABs */
 .fab {
   background: var(--lav); color: #131316;
-  bottom: calc(var(--sab) + 92px);
+  bottom: calc(var(--sab) + 78px);
   box-shadow: 0 12px 28px rgba(167,139,250,.5);
 }
 .fab-mic {
   background: var(--pill); color: var(--pill-text); border: none;
-  bottom: calc(var(--sab) + 158px);
+  bottom: calc(var(--sab) + 142px);
   box-shadow: 0 10px 24px rgba(19,19,22,.3);
 }
 
@@ -660,7 +669,8 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 .card-title .mini-link { font-size: 13.5px; font-weight: 600; }
 
 /* Termin-Karten: 2-spaltig, große Uhrzeit wie „18:15" im Referenzbild */
-.ev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ev-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ev-card { min-width: 0; }
 .ev-card {
   background: var(--card-2); border-radius: 20px; padding: 14px 14px 12px;
   cursor: pointer; position: relative; border: 1px solid var(--line);
@@ -705,7 +715,7 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 .sheet .ms-add button { background: var(--lav); color: #131316; }
 
 /* Toast leicht anheben über der Pill-Nav */
-.toast { bottom: calc(var(--sab) + 96px); }
+.toast { bottom: calc(var(--sab) + 84px); }
 
 /* ═══════════ V7 — Typografie, Icons, Farbe ═══════════ */
 body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -721,7 +731,7 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 .view { overflow-x: hidden; }
 
 /* Icon-Größen im Kontext */
-.tab .t-ic.msr { font-size: 23px; line-height: 1; height: auto; }
+.tab .t-ic.msr { font-size: 21px; line-height: 1; height: auto; }
 .tab { gap: 4px; }
 .fab .msr { font-size: 28px; }
 .fab-mic .msr { font-size: 22px; }
@@ -826,6 +836,10 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
         </div>
         <button class="icon-btn" id="btn-cal-today" aria-label="Heute"><span class="msr"></span></button>
       </div>
+      <div class="seg" id="cal-mode" style="margin-bottom:12px">
+        <button data-cm="monat" class="on">Monat</button>
+        <button data-cm="woche">Woche</button>
+      </div>
       <div class="card">
         <div class="cal-head">
           <div class="cal-month" id="cal-month"></div>
@@ -879,11 +893,6 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
         <div class="page-title">Notizen</div>
       </div>
       <div id="notes-list"></div>
-      <div class="card" style="margin-top:16px">
-        <div class="card-title">Meine Verknüpfungen</div>
-        <div class="links-grid" id="links-grid"></div>
-      </div>
-      <div class="empty" style="padding-top:4px">Tipp: Lange auf eine Kachel drücken, um sie zu bearbeiten.</div>
     </section>
 
   </div>
@@ -1151,25 +1160,41 @@ function renderHome() {
 /* ================= KALENDER ================= */
 let calCursor = new Date(); calCursor.setDate(1);
 let selDay = todayIso();
+let calMode = 'monat';
+function calDayCell(d, inMonth) {
+  const dIso = iso(d);
+  const evs = S.events.filter(e => e.date === dIso);
+  const dotCols = [...evs.map(e => e.color), ...extOn(dIso).map(() => 'var(--lav)')];
+  const cls = ['cal-day'];
+  if (!inMonth) cls.push('other');
+  if (dIso === todayIso()) cls.push('today');
+  if (dotCols.length && inMonth) cls.push('has');
+  if (dIso === selDay) cls.push('sel');
+  const dots = dotCols.slice(0, 3).map(col => `<span class="dot" style="background:${dIso === selDay ? 'var(--pill-text)' : col}"></span>`).join('');
+  return `<button class="${cls.join(' ')}" data-day="${dIso}">${d.getDate()}${dotCols.length ? `<span class="dots">${dots}</span>` : ''}</button>`;
+}
 function renderCal() {
-  const y = calCursor.getFullYear(), m = calCursor.getMonth();
-  $('#cal-month').textContent = MONTHS[m] + ' ' + y;
-  const first = new Date(y, m, 1);
-  let startOffset = (first.getDay() + 6) % 7; // Monday = 0
   const cells = [];
   DOWS.forEach(d => cells.push(`<div class="cal-dow">${d}</div>`));
-  const start = new Date(y, m, 1 - startOffset);
-  for (let i = 0; i < 42; i++) {
-    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
-    const dIso = iso(d);
-    const evs = S.events.filter(e => e.date === dIso);
-    const cls = ['cal-day'];
-    if (d.getMonth() !== m) cls.push('other');
-    if (dIso === todayIso()) cls.push('today');
-    if (dIso === selDay) cls.push('sel');
-    const dotCols = [...evs.map(e => e.color), ...extOn(dIso).map(() => 'var(--lav)')];
-    const dots = dotCols.slice(0,3).map(col => `<span class="dot" style="background:${dIso===selDay?'var(--pill-text)':col}"></span>`).join('');
-    cells.push(`<button class="${cls.join(' ')}" data-day="${dIso}">${d.getDate()}${evs.length?`<span class="dots">${dots}</span>`:''}</button>`);
+  if (calMode === 'woche') {
+    const off = (calCursor.getDay() + 6) % 7;
+    const mon = new Date(calCursor.getFullYear(), calCursor.getMonth(), calCursor.getDate() - off);
+    const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+    $('#cal-month').textContent = mon.getDate() + '. – ' + sun.getDate() + '. ' + MONTHS[sun.getMonth()].slice(0, 3) + ' ' + sun.getFullYear();
+    for (let i = 0; i < 7; i++) {
+      cells.push(calDayCell(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i), true));
+    }
+    $('#cal-grid').classList.add('week');
+  } else {
+    const y = calCursor.getFullYear(), m = calCursor.getMonth();
+    $('#cal-month').textContent = MONTHS[m] + ' ' + y;
+    const startOffset = (new Date(y, m, 1).getDay() + 6) % 7;
+    const start = new Date(y, m, 1 - startOffset);
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      cells.push(calDayCell(d, d.getMonth() === m));
+    }
+    $('#cal-grid').classList.remove('week');
   }
   $('#cal-grid').innerHTML = cells.join('');
   $('#sel-day-title').innerHTML = `${esc(relDay(selDay))} <span class="mini-link" id="add-ev-day">+ Termin</span>`;
@@ -1189,8 +1214,15 @@ function evRowHtml(e) {
       <div class="ev-notes">${e.date !== selDay || currentTab === 'heute' ? esc(relDay(e.date)) + (e.notes ? ' · ' + esc(e.notes) : '') : esc(e.notes || '')}</div>
     </div></div>`;
 }
-$('#cal-prev').addEventListener('click', () => { calCursor.setMonth(calCursor.getMonth() - 1); renderCal(); vibrate(); });
-$('#cal-next').addEventListener('click', () => { calCursor.setMonth(calCursor.getMonth() + 1); renderCal(); vibrate(); });
+$('#cal-prev').addEventListener('click', () => { calMode === 'woche' ? calCursor.setDate(calCursor.getDate() - 7) : calCursor.setMonth(calCursor.getMonth() - 1); renderCal(); vibrate(); });
+$('#cal-next').addEventListener('click', () => { calMode === 'woche' ? calCursor.setDate(calCursor.getDate() + 7) : calCursor.setMonth(calCursor.getMonth() + 1); renderCal(); vibrate(); });
+$('#cal-mode').addEventListener('click', e => {
+  const b = e.target.closest('[data-cm]'); if (!b) return;
+  calMode = b.dataset.cm;
+  document.querySelectorAll('#cal-mode button').forEach(x => x.classList.toggle('on', x === b));
+  if (calMode === 'woche') { const [y, mo, da] = selDay.split('-').map(Number); calCursor = new Date(y, mo - 1, da); }
+  renderCal(); vibrate();
+});
 $('#btn-cal-today').addEventListener('click', () => { calCursor = new Date(); calCursor.setDate(1); selDay = todayIso(); renderCal(); vibrate(); });
 $('#cal-grid').addEventListener('click', e => {
   const b = e.target.closest('[data-day]');
@@ -2336,7 +2368,7 @@ document.addEventListener('click', e => {
 
 /* ================= Render all ================= */
 function renderAll() {
-  renderHome(); renderCal(); renderTasks(); renderLinks(); renderNotes(); renderZiele(); updateBadge();
+  renderHome(); renderCal(); renderTasks(); renderNotes(); renderZiele(); updateBadge();
 }
 /* Echte sichtbare Höhe messen (iOS-Toolbar/Viewport-Bug) */
 let lastVH = 0;
