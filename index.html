@@ -1214,7 +1214,7 @@ function taskRowHtml(t) {
         ${t.prio ? `<span class="prio-dot prio-${t.prio}"></span>` : ''}
         ${t.due ? `<span class="${overdue ? 'overdue' : ''}">${overdue ? '⚠︎ ' : ''}${esc(relDay(t.due))}${t.dueTime ? ', ' + esc(t.dueTime) : ''}</span>` : ''}
         ${t.cat ? catTag(t.cat) : ''}
-        ${t.notes ? `<span>· ${esc(t.notes)}</span>` : ''}
+        ${t.notes ? `<span>· ${esc(t.notes).split('\n').filter(Boolean).join(' · ')}</span>` : ''}
       </div>
     </div></div>`;
 }
@@ -1319,8 +1319,8 @@ function sheetTask(t) {
     </div>
     <div class="f-label">Lebensbereich</div>
     ${catChipsHtml('st-cat', t ? t.cat : null)}
-    <div class="f-label">Notiz (optional)</div>
-    <input class="f-input" id="st-notes" placeholder="Details…" value="${t ? esc(t.notes || '') : ''}">
+    <div class="f-label">Notizen / Liste (optional)</div>
+    <textarea class="f-area" id="st-notes" placeholder="Details, Einkaufsliste, Hinweise…&#10;Ein Punkt pro Zeile" style="min-height:70px">${t ? esc(t.notes || '') : ''}</textarea>
     <button class="btn btn-primary" id="st-save">${isNew ? 'Hinzufügen' : 'Speichern'}</button>
     ${isNew ? '' : '<button class="btn btn-ghost-danger" id="st-del">Löschen</button>'}
   `);
@@ -1884,14 +1884,24 @@ function parseCapture(text) {
     else if (hasTask) type = 'task';
     else if (date || time) type = 'event';
     else type = 'note';
-    return {
+    const item = {
       type,
       title: cleanTitle(cleaned),
       date: date || (type === 'event' ? todayIso() : null),
       time: time,
       cat: detectCat(seg),
+      aiNotes: '',
       raw: seg
     };
+    // Aufzählungen (z. B. Einkaufsliste) als Notiz an die Aufgabe hängen
+    const lm = item.title.match(/^(.*?(?:einkaufen|einkäufe|kaufen|besorgen|mitbringen|packen|holen))[:,]\s*(.+)$/i);
+    if (item.type === 'task' && lm && (/,/.test(lm[2]) || /\bund\b/i.test(lm[2]))) {
+      item.title = cleanTitle(lm[1]);
+      item.aiNotes = lm[2].split(/\s*,\s*|\s+und\s+/i)
+        .map(s => s.trim()).filter(Boolean)
+        .map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('\n');
+    }
+    return item;
   });
 }
 
@@ -1915,6 +1925,7 @@ Antworte AUSSCHLIESSLICH mit validem JSON in diesem Format:
 
 Regeln:
 - Benenne Aufgaben prägnant und aktiv (Verb + Objekt), fasse den Sinn zusammen statt wörtlich zu übernehmen.
+- WICHTIG: Genannte Details, Produkte und Aufzählungen gehören ins Feld "notes" des Eintrags – als Liste, ein Punkt pro Zeile (mit \\n getrennt). Beispiel: "Ich muss einkaufen, Milch, Eier und Brot" → task "Einkaufen" mit notes "Milch\\nEier\\nBrot". Genauso: Orte, Personen, Hinweise ("bring die Unterlagen mit") → notes des passenden Eintrags.
 - Erkenne größere Vorhaben und lege sie als "project" mit 3–7 konkreten, logischen Zwischenschritten an.
 - Ideen und Gedanken ohne Handlungsbedarf werden zu "note" – ausformuliert und geordnet, nicht wortwörtlich.
 - Relative Zeitangaben (morgen, nächsten Freitag …) rechnest du in echte Daten um.
@@ -2040,6 +2051,7 @@ function syncProps() {
     const t = document.getElementById('pt-' + i); if (t) p.title = t.value;
     const d = document.getElementById('pd-' + i); if (d) p.date = d.value || null;
     const ti = document.getElementById('pti-' + i); if (ti) p.time = ti.value || null;
+    const nn = document.getElementById('pn-' + i); if (nn) p.aiNotes = nn.value.trim();
   });
 }
 function renderProps() {
@@ -2062,7 +2074,7 @@ function renderProps() {
         <div style="margin:2px 0 8px;padding:10px 12px;background:var(--card);border-radius:12px">
           ${p.milestones.map(m => `<div style="font-size:13.5px;font-weight:600;padding:3px 0;color:var(--text-2)">◦ ${esc(m)}</div>`).join('')}
         </div>` : ''}
-      ${p.aiNotes ? `<div style="font-size:12.5px;color:var(--text-2);margin:0 2px 8px">${esc(p.aiNotes)}</div>` : ''}
+      ${p.type === 'task' || p.type === 'event' ? `<textarea class="f-area" id="pn-${i}" placeholder="Notizen / Liste (optional)" style="min-height:52px;margin-bottom:8px;font-size:14px">${esc(p.aiNotes || '')}</textarea>` : ''}
       ${catChipsHtml('pc-' + i, p.cat)}
     </div>`).join('');
   capProps.forEach((p, i) => {
