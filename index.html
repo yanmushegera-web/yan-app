@@ -532,15 +532,15 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
 .cal-day.sel { background: var(--pill); color: var(--pill-text); box-shadow: none; }
 .cal-day.today { color: var(--accent); }
 
-/* Schwebende dunkle Tab-Leiste */
+/* Dunkle Tab-Leiste, fest an der Unterkante angedockt */
 .tabbar {
-  left: 14px; right: 14px; bottom: calc(var(--sab) + 10px);
-  border-radius: 999px; border: none;
+  left: 0; right: 0; bottom: 0;
+  border-radius: 26px 26px 0 0; border: none;
   background: var(--nav-bg);
   backdrop-filter: saturate(160%) blur(18px);
   -webkit-backdrop-filter: saturate(160%) blur(18px);
-  padding: 9px 10px;
-  box-shadow: 0 14px 38px rgba(19,19,22,.28);
+  padding: 12px 12px calc(var(--sab) + 6px);
+  box-shadow: 0 -10px 34px rgba(19,19,22,.22);
 }
 [data-theme="dark"] .tabbar { box-shadow: 0 14px 38px rgba(0,0,0,.5); border: 1px solid var(--line); }
 .tab { color: #86868E; padding: 5px 12px; }
@@ -548,7 +548,7 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
 [data-theme="dark"] .tab.on { color: #F4F3EC; }
 .tab.on .t-ic { animation: tabBounce .3s cubic-bezier(.34,1.56,.64,1); }
 @keyframes tabBounce { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: scale(1); } }
-@media (min-width: 700px) { .tabbar { max-width: 480px; left: 50%; transform: translateX(-50%); } }
+@media (min-width: 700px) { .tabbar { max-width: 520px; left: 50%; transform: translateX(-50%); border-radius: 26px 26px 0 0; } }
 
 /* FABs */
 .fab {
@@ -2275,14 +2275,21 @@ function renderAll() {
   renderHome(); renderCal(); renderTasks(); renderLinks(); renderNotes(); renderZiele(); updateBadge();
 }
 /* Echte sichtbare Höhe messen (iOS-Toolbar/Viewport-Bug) */
+let lastVH = 0;
 function fitVH() {
-  document.documentElement.style.setProperty('--vh', window.innerHeight + 'px');
+  const h = window.innerHeight;
+  if (h !== lastVH) {
+    lastVH = h;
+    document.documentElement.style.setProperty('--vh', h + 'px');
+  }
 }
 fitVH();
 addEventListener('resize', fitVH);
 addEventListener('orientationchange', () => setTimeout(fitVH, 250));
 addEventListener('pageshow', fitVH);
+if (window.visualViewport) visualViewport.addEventListener('resize', fitVH);
 setTimeout(fitVH, 350);
+setInterval(fitVH, 1000); // Drift-Absicherung (iOS meldet Höhe teils erst spät korrekt)
 
 applyTheme();
 renderAll();
