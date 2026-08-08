@@ -905,6 +905,15 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 .chip { min-height: 40px; }
 .mini-link { padding: 8px 10px; margin: -8px -10px; }
 
+/* ---------- Section-Takes ---------- */
+.rec-mini { padding: 9px; font-size: 13px; margin-top: 8px; border-radius: 11px; }
+.take-name {
+  flex: 1; border: none; background: transparent; font-family: inherit;
+  font-size: 13.5px; font-weight: 700; color: var(--text); outline: none; min-width: 0;
+  border-bottom: 1px dashed var(--text-3); padding: 3px 0;
+}
+.sheet .take-name { color: #F4F1EA; }
+
 /* ---------- Zeitachse ---------- */
 .tl-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; position: relative; }
 .tl-row.past { opacity: .38; }
@@ -1756,6 +1765,7 @@ function viewSong(s) {
       <div class="vw-song-type">${esc(sec.type)}</div>
       ${sec.chords ? `<div class="vw-song-chords">${esc(sec.chords)}</div>` : ''}
       ${sec.lyrics ? `<div class="vw-song-lyrics">${esc(sec.lyrics)}</div>` : ''}
+      <div data-vwtakes="${sec.id}"></div>
     </div>`).join('') || '<div class="empty">Noch keine Parts</div>'}
     ${s.notes ? `<div class="vw-sec">Notizen</div><div class="vw-text">${esc(s.notes)}</div>` : ''}
     <div class="vw-sec">Sprachmemos</div>
@@ -1763,6 +1773,21 @@ function viewSong(s) {
     <button class="btn" style="background:var(--lime);color:#131316;margin-top:24px" id="vw-song-pdf">${icon('picture_as_pdf')} Als PDF exportieren</button>
   `, () => sheetSong(s));
   renderMemoList('#vw-memos', s.id);
+  memoAll(s.id).then(all => {
+    document.querySelectorAll('[data-vwtakes]').forEach(host => {
+      const takes = all.filter(m => m.secId === host.dataset.vwtakes);
+      if (!takes.length) return;
+      host.innerHTML = takes.map(m => `
+        <div class="memo-row" data-mrow="${m.id}">
+          <button class="memo-play" data-vwplay="${m.id}"><span class="msr">${ICON.play_arrow}</span></button>
+          <span class="memo-name">${esc(m.name || 'Take')}</span>
+        </div>`).join('');
+      host.querySelectorAll('[data-vwplay]').forEach(b => b.addEventListener('click', () => {
+        const m = takes.find(x => x.id === b.dataset.vwplay);
+        openMemoPlayer(m, b.closest('.memo-row'));
+      }));
+    });
+  });
   $('#vw-song-pdf').addEventListener('click', () => downloadSongPdf(s));
 }
 document.addEventListener('click', e => {
@@ -2025,10 +2050,13 @@ function sheetSong(s) {
         </div>
         <input class="sec-chords" data-schords="${i}" placeholder="Akkorde: Am  F  C  G" value="${esc(sec.chords || '')}" autocapitalize="off">
         <textarea class="sec-lyrics" data-slyrics="${i}" placeholder="Lyrics…">${esc(sec.lyrics || '')}</textarea>
+        <div data-stakes="${sec.id}"></div>
+        <button class="rec-btn rec-mini" data-srec="${sec.id}">${icon('mic')} Take für ${esc(sec.type)} aufnehmen</button>
       </div>`).join('');
     $('#sg-secs').querySelectorAll('[data-sdel]').forEach(b => b.addEventListener('click', () => {
       syncSecs(); tmp.sections.splice(+b.dataset.sdel, 1); renderSecs();
     }));
+    if (typeof renderSecTakes === 'function') renderSecTakes();
   }
   function syncSecs() {
     $('#sg-secs').querySelectorAll('[data-schords]').forEach(el => { tmp.sections[+el.dataset.schords].chords = el.value; });
@@ -2041,32 +2069,60 @@ function sheetSong(s) {
     vibrate();
   });
   // Memos
-  const renderMemos = () => renderMemoList('#sg-memos', tmp.id);
-  renderMemos();
-  $('#sg-rec').addEventListener('click', async () => {
-    const btn = $('#sg-rec');
-    if (recMedia && recMedia.state === 'recording') {
-      recMedia.stop(); return;
-    }
+  const renderMemos = () => { renderMemoList('#sg-memos', tmp.id); renderSecTakes(); };
+  async function startRec(btn, secId, label) {
+    if (recMedia && recMedia.state === 'recording') { recMedia.stop(); return; }
     try {
       recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       recChunks = [];
       recMedia = new MediaRecorder(recStream);
       recMedia.ondataavailable = e => recChunks.push(e.data);
+      const idle = btn.innerHTML;
       recMedia.onstop = async () => {
         recStream.getTracks().forEach(t => t.stop());
         const blob = new Blob(recChunks, { type: recMedia.mimeType || 'audio/mp4' });
-        await memoAdd({ id: uid(), songId: tmp.id, blob, ts: Date.now() });
+        const all = await memoAll(tmp.id);
+        const nr = all.filter(m => m.secId === secId).length + 1;
+        await memoAdd({ id: uid(), songId: tmp.id, secId: secId || null, name: secId ? 'Take ' + nr : '', blob, ts: Date.now() });
         btn.classList.remove('rec');
-        btn.innerHTML = icon('mic') + ' Memo aufnehmen';
-        renderMemos(); toast('Memo gespeichert 🎙️'); vibrate();
+        btn.innerHTML = idle;
+        renderMemos(); toast('Aufnahme gespeichert 🎙️'); vibrate();
       };
       recMedia.start();
       btn.classList.add('rec');
-      btn.innerHTML = icon('stop') + ' Aufnahme läuft – tippen zum Stoppen';
+      btn.innerHTML = icon('stop') + ' Läuft – tippen zum Stoppen';
       vibrate();
     } catch (e) { toast('Mikrofon nicht verfügbar – Berechtigung prüfen'); }
-  });
+  }
+  async function renderSecTakes() {
+    const all = await memoAll(tmp.id);
+    document.querySelectorAll('[data-stakes]').forEach(host => {
+      const secId = host.dataset.stakes;
+      const takes = all.filter(m => m.secId === secId);
+      host.innerHTML = takes.map(m => `
+        <div class="memo-row" data-mrow="${m.id}">
+          <button class="memo-play" data-tplay="${m.id}"><span class="msr">${ICON.play_arrow}</span></button>
+          <input class="take-name" data-tname="${m.id}" value="${esc(m.name || 'Take')}" placeholder="Topline / Version…">
+          <button class="memo-del" data-tdel2="${m.id}">✕</button>
+        </div>`).join('');
+      host.querySelectorAll('[data-tplay]').forEach(b => b.addEventListener('click', () => {
+        const m = takes.find(x => x.id === b.dataset.tplay);
+        openMemoPlayer(m, b.closest('.memo-row'));
+      }));
+      host.querySelectorAll('[data-tname]').forEach(inp => inp.addEventListener('change', async () => {
+        const m = takes.find(x => x.id === inp.dataset.tname);
+        if (m) { m.name = inp.value.trim(); await memoAdd(m); toast('Umbenannt'); }
+      }));
+      host.querySelectorAll('[data-tdel2]').forEach(b => b.addEventListener('click', async () => {
+        await memoDel(b.dataset.tdel2); stopMemo(); renderMemos(); toast('Take gelöscht');
+      }));
+    });
+    document.querySelectorAll('[data-srec]').forEach(b => {
+      if (!b.dataset.bound) { b.dataset.bound = '1'; b.addEventListener('click', () => startRec(b, b.dataset.srec, null)); }
+    });
+  }
+  renderMemos();
+  $('#sg-rec').addEventListener('click', () => startRec($('#sg-rec'), null, null));
   // Speichern / PDF / Löschen
   $('#sg-save').addEventListener('click', () => {
     syncSecs();
