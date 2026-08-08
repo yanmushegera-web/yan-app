@@ -978,7 +978,136 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 .big-day { font-size: 32px; font-weight: 500; }
 .day-sub { font-weight: 500; }
 
+/* ═══════════ V8 — Desktop-Layout (ab 900px Fensterbreite) ═══════════ */
+/* Reine Media Queries: das Layout richtet sich nach der verfügbaren Breite,
+   nicht nach dem Gerätetyp. iPhone/schmale Fenster bleiben unverändert. */
+@media (min-width: 900px) {
+  /* --- Sidebar statt Bottom-Tab-Bar --- */
+  .tabbar {
+    left: 22px; right: auto; top: 50%; bottom: auto;
+    transform: translateY(-50%);
+    max-width: none; width: 92px;
+    flex-direction: column; justify-content: flex-start; gap: 8px;
+    padding: 16px 10px; border-radius: 30px;
+  }
+  .tab {
+    width: 100%; font-size: 11px; gap: 5px;
+    padding: 11px 4px; border-radius: 18px; min-width: 0;
+  }
+  .tab .t-ic.msr { font-size: 24px; }
+  .tab.on { background: rgba(244,243,236,.12); }
+  [data-theme="dark"] .tab.on { background: rgba(244,243,236,.09); }
+  body.sheet-open .tabbar { opacity: 1; pointer-events: auto; }
 
+  /* --- Inhalt: rechts neben der Sidebar, zentriert, mit Maximalbreite --- */
+  .view {
+    left: 134px;
+    max-width: none; margin: 0;
+    padding: 40px max(44px, calc((100% - 134px - 1020px) / 2)) 90px;
+  }
+  #view-aufgaben, #view-mehr {
+    padding-left: max(44px, calc((100% - 720px) / 2));
+    padding-right: max(44px, calc((100% - 720px) / 2));
+  }
+
+  /* --- Heute: Kopf volle Breite, Karten in zwei Spalten --- */
+  #view-heute {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 22px;
+    align-content: start;
+  }
+  #view-heute > .prof-row, #view-heute > .big-date, #view-heute > .big-day,
+  #view-heute > .day-sub, #view-heute > .home-filter, #view-heute > #tl-card,
+  #view-heute > #wr-card { grid-column: 1 / -1; }
+  /* Genug Platz: Filter-Pills umbrechen statt horizontal scrollen
+     (Scroll-Container kollabiert sonst als Grid-Item auf 0 Höhe) */
+  #view-heute > .home-filter { flex-wrap: wrap; overflow-x: visible; row-gap: 8px; }
+  #view-heute > .card { align-self: start; }
+  #view-heute > .big-date { font-size: 96px; margin-top: 10px; }
+  .blob-wrap { height: 420px; }
+
+  /* --- Kalender: Monat links, Tagestermine rechts --- */
+  #view-kalender {
+    display: grid;
+    grid-template-columns: 11fr 9fr;
+    column-gap: 22px;
+    align-content: start;
+  }
+  #view-kalender > .page-head, #view-kalender > .seg { grid-column: 1 / -1; }
+  #view-kalender > .card { align-self: start; }
+  .cal-day { aspect-ratio: auto; padding: 12px 0 16px; }
+
+  /* --- Ziele: Gewohnheiten links, Ziele & Projekte rechts --- */
+  #view-ziele {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 22px;
+    align-content: start;
+  }
+  #view-ziele > .page-head { grid-column: 1 / -1; }
+  #view-ziele > .card { align-self: start; }
+
+  /* --- Sheets werden zentrierte Dialoge --- */
+  .sheet {
+    left: 50%; right: auto; top: 50%; bottom: auto;
+    width: min(620px, calc(100vw - 96px));
+    max-height: min(86vh, 940px);
+    border-radius: 28px;
+    padding: 26px 28px 28px;
+    transform: translate(-50%, calc(-50% + 26px)) scale(.98);
+    opacity: 0;
+    box-shadow: 0 30px 90px rgba(0,0,0,.45);
+    transition: transform .26s cubic-bezier(.32,.72,.24,1), opacity .22s ease, visibility 0s .3s;
+  }
+  .sheet.open {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    transition: transform .26s cubic-bezier(.32,.72,.24,1), opacity .22s ease;
+  }
+  .grip { display: none; }
+  body.sheet-open .views { transform: none; }
+
+  /* --- Vollbild-Viewer: Inhalt mittig begrenzen, sanft einblenden --- */
+  .viewer { transform: none; opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+  .viewer.open { transform: none; opacity: 1; pointer-events: auto; }
+  .vw-head, .vw-body { max-width: 780px; margin-left: auto; margin-right: auto; width: 100%; }
+  .vw-head { padding-top: 26px; }
+
+  /* --- FABs & Toast --- */
+  .fab { right: 36px; bottom: 36px; }
+  .fab-mic { right: 36px; bottom: 106px; }
+  .toast { bottom: 40px; }
+}
+
+/* --- Maus/Trackpad: Hover-Zustände & Textauswahl (unabhängig von der Breite) --- */
+@media (hover: hover) and (pointer: fine) {
+  .tab:hover { color: #C9C9CF; }
+  .tab.on:hover { color: #FAFAF5; }
+  .chip:hover:not(.on), .cat-chip:hover:not(.on), .seg button:hover:not(.on) { border-color: var(--text-3); color: var(--text); }
+  .seg button:hover:not(.on) { background: var(--card-2); }
+  .icon-btn:hover, .cal-nav button:hover, .vw-btn:hover { background: var(--card-2); }
+  .cal-day:hover:not(.sel) { background: var(--card-2); }
+  .ev-card:hover, .note-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .song-card:hover, .proj-row:hover, .ev-row:hover, .ht-tile:hover { background: var(--card-2); border-radius: 14px; }
+  .fab:hover, .fab-mic:hover { transform: translateY(-2px) scale(1.04); }
+  .btn:hover { filter: brightness(1.05); }
+  .check:hover, .hh-check:hover, .ms-check:hover, .hw-dot.today:hover { border-color: var(--accent); color: var(--text-3); }
+  .mini-link:hover, .card-title .mini-link:hover { text-decoration: underline; }
+  .vw-link-row:hover, .pick-row:hover, .choose-btn:hover { filter: brightness(.97); }
+  [data-theme="dark"] .vw-link-row:hover, [data-theme="dark"] .pick-row:hover, [data-theme="dark"] .choose-btn:hover { filter: brightness(1.15); }
+  /* Am Desktop darf Text markiert & kopiert werden */
+  .vw-text, .vw-song-lyrics, .vw-song-chords, .note-text, .vw-title { -webkit-user-select: text; user-select: text; }
+  /* Dezente, schmale Scrollbalken */
+  .view::-webkit-scrollbar, .sheet::-webkit-scrollbar, .vw-body::-webkit-scrollbar { width: 9px; }
+  .view::-webkit-scrollbar-thumb, .sheet::-webkit-scrollbar-thumb, .vw-body::-webkit-scrollbar-thumb { background: var(--text-3); border-radius: 8px; border: 2px solid transparent; background-clip: content-box; opacity: .4; }
+  .view::-webkit-scrollbar-track, .sheet::-webkit-scrollbar-track, .vw-body::-webkit-scrollbar-track { background: transparent; }
+}
+
+/* Mittlere Fenster (iPad hoch, halbes Mac-Fenster): einfach mittig mit Luft */
+@media (min-width: 700px) and (max-width: 899.98px) {
+  .view { max-width: 560px; }
+}
 </style>
 </head>
 <body>
@@ -3454,6 +3583,7 @@ document.addEventListener('click', e => {
   const sheet = $('#sheet');
   let drag = null;
   sheet.addEventListener('touchstart', e => {
+    if (matchMedia('(min-width: 900px)').matches) return; // Desktop-Dialog: kein Wisch-Schließen
     if (sheet.scrollTop > 2) return;
     drag = { y0: e.touches[0].clientY, dy: 0, engaged: false };
   }, { passive: true });
@@ -3477,7 +3607,7 @@ document.addEventListener('click', e => {
   // Griff zusätzlich per Maus/Pointer ziehbar (Desktop & Tests)
   const grip = document.querySelector('.grip');
   let gdrag = null;
-  grip.addEventListener('pointerdown', e => { gdrag = { y0: e.clientY }; grip.setPointerCapture(e.pointerId); });
+  grip.addEventListener('pointerdown', e => { if (matchMedia('(min-width: 900px)').matches) return; gdrag = { y0: e.clientY }; grip.setPointerCapture(e.pointerId); });
   grip.addEventListener('pointermove', e => {
     if (!gdrag) return;
     const dy = Math.max(0, e.clientY - gdrag.y0);
@@ -3545,6 +3675,13 @@ checkReminders();
 syncExternal(true);
 setInterval(() => { if (currentTab === 'heute') renderHome(); }, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderAll(); checkReminders(); syncExternal(false); } });
+
+/* Desktop: Escape schließt Dialog bzw. Viewer */
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('#sheet').classList.contains('open')) { closeSheet(); return; }
+  if ($('#viewer').classList.contains('open')) closeViewer();
+});
 
 /* ================= Service Worker (nur gehostet) ================= */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
