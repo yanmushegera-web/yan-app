@@ -1614,21 +1614,29 @@ function syncPayload() {
   Object.keys(S).forEach(k => { if (!SYNC_SKIP.includes(k)) d[k] = S[k]; });
   return d;
 }
+let pullDone = false;
+function dataCount(d) { return (d.tasks||[]).length + (d.events||[]).length + (d.notes||[]).length + (d.songs||[]).length + (d.projects||[]).length + (d.habits||[]).length; }
 function scheduleCloudPush() {
-  if (!S.syncToken) return;
+  if (!S.syncToken || !pullDone) return;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(cloudPush, 20000);
 }
 async function cloudPush() {
-  if (!S.syncToken || !navigator.onLine) return;
+  if (!S.syncToken || !navigator.onLine || !pullDone) return;
   try {
-    if (syncSha === null) {
-      const g = await fetch(SYNC_URL, { headers: { authorization: 'Bearer ' + S.syncToken } });
-      if (g.ok) syncSha = (await g.json()).sha;
-      else if (g.status === 404) syncSha = '';
-      else return;
+    // Immer frischen Remote-Stand holen (sha + Sicherheitscheck)
+    const g = await fetch(SYNC_URL, { headers: { authorization: 'Bearer ' + S.syncToken } });
+    let remoteData = null;
+    if (g.ok) { const gj = await g.json(); syncSha = gj.sha; try { remoteData = JSON.parse(b64dec(gj.content.replace(/\n/g, ''))); } catch (e) {} }
+    else if (g.status === 404) syncSha = '';
+    else return;
+    const localPayload = syncPayload();
+    // Schutz: lokal (fast) leer, remote gefüllt → NICHT überschreiben, stattdessen Remote laden
+    if (remoteData && remoteData.data && dataCount(localPayload) < dataCount(remoteData.data) && dataCount(localPayload) <= 1) {
+      Object.assign(S, remoteData.data); S.lastChange = remoteData.v; store.set('yanapp', S); renderAll();
+      return;
     }
-    const body = { message: 'sync', content: b64enc(JSON.stringify({ v: S.lastChange || Date.now(), data: syncPayload() })) };
+    const body = { message: 'sync', content: b64enc(JSON.stringify({ v: S.lastChange || Date.now(), data: localPayload })) };
     if (syncSha) body.sha = syncSha;
     const r = await fetch(SYNC_URL, { method: 'PUT', headers: { authorization: 'Bearer ' + S.syncToken, 'content-type': 'application/json' }, body: JSON.stringify(body) });
     if (r.ok) { syncSha = (await r.json()).content.sha; S.lastSyncAt = Date.now(); store.set('yanapp', S); }
@@ -1639,10 +1647,11 @@ async function cloudPull() {
   if (!S.syncToken || !navigator.onLine) return false;
   try {
     const r = await fetch(SYNC_URL, { headers: { authorization: 'Bearer ' + S.syncToken, accept: 'application/vnd.github+json' } });
-    if (!r.ok) return false;
+    if (!r.ok) { if (r.status === 404) pullDone = true; return false; }
     const j = await r.json();
     syncSha = j.sha;
     const remote = JSON.parse(b64dec(j.content.replace(/\n/g, '')));
+    pullDone = true;
     if (remote && remote.v && remote.v > (S.lastChange || 0)) {
       Object.assign(S, remote.data);
       S.lastChange = remote.v; S.lastSyncAt = Date.now();
@@ -1650,8 +1659,8 @@ async function cloudPull() {
       renderAll();
       return true;
     }
-  } catch (e) {}
-  return false;
+    return false;
+  } catch (e) { return false; }
 }
 window.addEventListener('online', () => scheduleCloudPush());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) cloudPull(); });
