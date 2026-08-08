@@ -1003,6 +1003,10 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
       <div class="day-sub" id="hero-sub"></div>
       <div class="cat-scroll home-filter" id="home-filter"></div>
       <div id="wx-card" style="display:none" class="card wx-card"></div>
+      <div class="card" id="wr-card" style="display:none;cursor:pointer;background:var(--pill);color:var(--pill-text)" onclick="viewWeekReview()">
+        <div class="card-title" style="color:inherit">🗓 Dein Wochenrückblick ist da</div>
+        <div style="font-size:13.5px;opacity:.8">Antippen für deine Woche in Zahlen</div>
+      </div>
       <div class="card" id="tl-card" style="display:none">
         <div class="card-title">Heute im Zeitplan</div>
         <div id="tl-list"></div>
@@ -1364,6 +1368,10 @@ function renderHome() {
     </div>`;
   }).join('')
     : '<div class="empty"><span class="e-icon msr"></span>Keine offenen Aufgaben</div>';
+
+  // Wochenrückblick (sonntags)
+  const wr = $('#wr-card');
+  if (wr) wr.style.display = now.getDay() === 0 ? '' : 'none';
 
   // Zeitachse heute
   const tlItems = [
@@ -1799,6 +1807,35 @@ document.addEventListener('click', e => {
   if (ve) { const ev = S.events.find(x => x.id === ve.dataset.vwEv); if (ev) viewEvent(ev, false); }
 });
 
+/* ================= WOCHENRÜCKBLICK ================= */
+function viewWeekReview() {
+  const now = new Date();
+  const off = (now.getDay() + 6) % 7;
+  const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - off);
+  const monIso = iso(mon);
+  const doneTasks = S.tasks.filter(t => t.done && t.doneAt && t.doneAt >= monIso);
+  const openTasks = S.tasks.filter(t => !t.done).length;
+  const habitStats = S.habits.map(h => {
+    let cnt = 0;
+    for (let i = 0; i < 7; i++) { const d = iso(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i)); if (h.days[d]) cnt++; }
+    return { h, cnt, streak: habitStreak(h) };
+  });
+  const projs = S.projects.filter(p => !p.archived).map(p => ({ p, pct: projProgress(p) }));
+  const songsWeek = S.songs.filter(s => s.updatedAt >= mon.getTime()).length;
+  openViewer('Wochenrückblick', `
+    <div class="vw-title">Deine Woche</div>
+    <div class="vw-meta"><span class="vw-pill">${mon.getDate()}.${mon.getMonth() + 1}. – heute</span></div>
+    <div class="vw-sec">Erledigt</div>
+    <div class="vw-pill" style="display:block;padding:14px 16px;font-size:15px"><b>${doneTasks.length}</b> Aufgabe${doneTasks.length === 1 ? '' : 'n'} geschafft · <b>${openTasks}</b> noch offen${songsWeek ? ` · an <b>${songsWeek}</b> Song${songsWeek === 1 ? '' : 's'} gearbeitet 🎵` : ''}</div>
+    ${doneTasks.length ? doneTasks.slice(0, 8).map(t => `<div class="vw-link-row" style="cursor:default"><span class="msr" style="color:var(--ok)">${ICON.check}</span><span style="flex:1">${esc(t.title)}</span></div>`).join('') : ''}
+    <div class="vw-sec">Gewohnheiten</div>
+    ${habitStats.length ? habitStats.map(x => `<div class="vw-link-row" style="cursor:default"><span>${x.h.icon}</span><span style="flex:1">${esc(x.h.title)}</span><span style="font-weight:800">${x.cnt}/7</span>${x.streak > 1 ? `<span class="streak">${icon('local_fire_department')} ${x.streak}</span>` : ''}</div>`).join('') : '<div style="font-size:13px;color:var(--text-3)">Keine Gewohnheiten angelegt</div>'}
+    <div class="vw-sec">Ziele</div>
+    ${projs.length ? projs.map(x => `<div class="vw-link-row" style="cursor:default"><span style="flex:1">${esc(x.p.title)}</span><span style="font-weight:800;color:${x.pct >= 100 ? 'var(--ok)' : 'inherit'}">${x.pct >= 100 ? '✓' : x.pct + '%'}</span></div>`).join('') : '<div style="font-size:13px;color:var(--text-3)">Keine aktiven Ziele</div>'}
+    <div style="margin-top:26px;font-size:14px;color:var(--text-2);line-height:1.6">${doneTasks.length >= 5 ? 'Starke Woche – weiter so! 💪' : doneTasks.length > 0 ? 'Solide Woche. Nächste Woche geht mehr ✨' : 'Neue Woche, neues Glück – leg einfach los 🌱'}</div>
+  `, null);
+}
+
 /* ================= MEMO-PLAYER ================= */
 let MPA = null, mpTimer = null, mpOpenId = null;
 function fmtT(s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
@@ -2046,8 +2083,12 @@ function sheetSong(s) {
       <div class="sec-card">
         <div class="sec-head">
           <span class="sec-type">${esc(sec.type)}</span>
-          <button class="ms-del" data-sdel="${i}">✕</button>
+          <span style="display:flex;gap:2px">
+            <button class="ms-del" data-sai="${i}" title="KI-Vorschläge">✨</button>
+            <button class="ms-del" data-sdel="${i}">✕</button>
+          </span>
         </div>
+        <div class="ai-box" data-saibox="${i}" style="display:none"></div>
         <input class="sec-chords" data-schords="${i}" placeholder="Akkorde: Am  F  C  G" value="${esc(sec.chords || '')}" autocapitalize="off">
         <textarea class="sec-lyrics" data-slyrics="${i}" placeholder="Lyrics…">${esc(sec.lyrics || '')}</textarea>
         <div data-stakes="${sec.id}"></div>
@@ -2057,6 +2098,36 @@ function sheetSong(s) {
       syncSecs(); tmp.sections.splice(+b.dataset.sdel, 1); renderSecs();
     }));
     if (typeof renderSecTakes === 'function') renderSecTakes();
+    $('#sg-secs').querySelectorAll('[data-sai]').forEach(b => b.addEventListener('click', () => songAI(+b.dataset.sai)));
+  }
+  async function songAI(i) {
+    if (!S.apiKey) { toast('Erst API-Schlüssel im Admin-Bereich eintragen'); return; }
+    syncSecs();
+    const sec = tmp.sections[i];
+    const box = document.querySelector(`[data-saibox="${i}"]`);
+    box.style.display = ''; box.innerHTML = '<div style="font-size:13px;color:var(--text-3);padding:6px 0">✨ Claude denkt nach …</div>';
+    try {
+      const ctx = tmp.sections.map(s2 => `[${s2.type}]\n${s2.lyrics || '(leer)'}`).join('\n\n');
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': S.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: AI_MODELS[0], max_tokens: 600,
+          system: 'Du bist Songwriting-Partner für einen deutschen Künstler (Pop/Urban). Antworte NUR mit einem JSON-Array aus genau 4 Strings: Zeilen-Vorschläge (Weiterführungen, Alternativen oder Reime) für die angefragte Section. Kein Text drumherum. Ton: modern, bildhaft, singbar.',
+          messages: [{ role: 'user', content: `Song: ${tmp.title || 'Ohne Titel'}${tmp.key ? ', Tonart ' + tmp.key : ''}${tmp.bpm ? ', ' + tmp.bpm + ' BPM' : ''}\nNotizen: ${tmp.notes || '-'}\n\nBisheriger Song:\n${ctx}\n\nGib mir 4 Zeilen-Vorschläge für die Section [${sec.type}].` }] })
+      });
+      if (!res.ok) throw new Error('API ' + res.status);
+      const data = await res.json();
+      const raw = (data.content || []).map(c => c.text || '').join('');
+      const arr = JSON.parse(raw.slice(raw.indexOf('['), raw.lastIndexOf(']') + 1));
+      box.innerHTML = arr.map(l => `<button class="pick-row" data-ail="${esc(l)}">${esc(l)}</button>`).join('') +
+        '<button class="pick-row" data-aiclose style="color:var(--text-3)">Schließen</button>';
+      box.querySelectorAll('[data-ail]').forEach(b => b.addEventListener('click', () => {
+        const ta = document.querySelector(`[data-slyrics="${i}"]`);
+        ta.value = (ta.value ? ta.value + '\n' : '') + b.dataset.ail;
+        vibrate(); toast('Zeile übernommen ✨');
+      }));
+      box.querySelector('[data-aiclose]').addEventListener('click', () => { box.style.display = 'none'; });
+    } catch (e) { box.innerHTML = '<div style="font-size:13px;color:var(--danger);padding:6px 0">KI-Anfrage fehlgeschlagen – Schlüssel/Guthaben prüfen</div>'; }
   }
   function syncSecs() {
     $('#sg-secs').querySelectorAll('[data-schords]').forEach(el => { tmp.sections[+el.dataset.schords].chords = el.value; });
@@ -2705,6 +2776,7 @@ document.addEventListener('click', e => {
 });
 
 /* ================= Sheets: Ziel/Projekt ================= */
+const RELEASE_MS = ['Songs final mischen','Master fertig','Artwork & Cover','Distribution hochladen','Pre-Save-Kampagne starten','Content-Batch drehen (Reels)','Release-Tag 🎉'];
 function sheetProject(p) {
   const isNew = !p;
   const ms = p ? p.milestones : [];
@@ -2730,6 +2802,7 @@ function sheetProject(p) {
     </div>
     <div id="sp-schritte" style="display:${mode === 'schritte' ? 'block' : 'none'}">
       <div class="f-label">Meilensteine</div>
+      ${isNew ? '<button class="chip" id="sp-tpl-release" style="margin-bottom:8px">🎵 Release-Vorlage laden</button>' : ''}
       <div id="sp-ms-list"></div>
       <div class="ms-add">
         <input class="f-input" id="sp-ms-new" placeholder="Nächster Schritt…">
@@ -2763,6 +2836,14 @@ function sheetProject(p) {
     }));
   }
   renderMs();
+  const tplBtn = $('#sp-tpl-release');
+  if (tplBtn) tplBtn.addEventListener('click', () => {
+    if (!$('#sp-title').value.trim()) $('#sp-title').value = 'Release: ';
+    RELEASE_MS.forEach(t2 => tempMs.push({ id: uid(), title: t2, done: false }));
+    if (!cat) { cat = 'musik'; document.querySelectorAll('#sp-cat .chip').forEach(c => c.classList.toggle('on', c.dataset.v === 'musik')); }
+    renderMs(); toast('Release-Plan geladen 🎵'); vibrate();
+    $('#sp-title').focus();
+  });
   $('#sp-ms-add').addEventListener('click', () => {
     const v = $('#sp-ms-new').value.trim(); if (!v) return;
     tempMs.push({ id: uid(), title: v, done: false });
