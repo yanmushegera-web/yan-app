@@ -1935,11 +1935,12 @@ function viewSong(s) {
       host.innerHTML = takes.map(m => `
         <div class="memo-row" data-mrow="${m.id}">
           <button class="memo-play" data-vwplay="${m.id}"><span class="msr">${ICON.play_arrow}</span></button>
-          <span class="memo-name">${esc(m.name || 'Take')}</span>
+          <span class="memo-name">${esc(m.name || 'Take')}${m.cloud ? ` <span class="msr" style="font-size:13px;color:var(--text-3)">${ICON.download}</span>` : ''}</span>
         </div>`).join('');
-      host.querySelectorAll('[data-vwplay]').forEach(b => b.addEventListener('click', () => {
+      host.querySelectorAll('[data-vwplay]').forEach(b => b.addEventListener('click', async () => {
         const m = takes.find(x => x.id === b.dataset.vwplay);
-        openMemoPlayer(m, b.closest('.memo-row'));
+        const mm = await ensureMemoBlob(m, b);
+        if (mm) openMemoPlayer(mm, b.closest('.memo-row'));
       }));
     });
   });
@@ -2044,15 +2045,16 @@ async function renderMemoList(sel, songId) {
   host.innerHTML = memos.length ? memos.map(m => `
     <div class="memo-row" data-mrow="${m.id}">
       <button class="memo-play" data-mplay2="${m.id}"><span class="msr">${ICON.play_arrow}</span></button>
-      <span class="memo-name">${new Date(m.ts).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}, ${new Date(m.ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr</span>
+      <span class="memo-name">${new Date(m.ts).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}, ${new Date(m.ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr${m.cloud ? ` <span class="msr" style="font-size:13px;color:var(--text-3)" title="In der Cloud – wird beim Abspielen geladen">${ICON.download}</span>` : ''}</span>
       <button class="memo-del" data-mdel2="${m.id}">✕</button>
     </div>`).join('') : '<div style="font-size:13px;color:var(--text-3);padding:2px 0 6px">Noch keine Memos.</div>';
-  host.querySelectorAll('[data-mplay2]').forEach(b => b.addEventListener('click', () => {
+  host.querySelectorAll('[data-mplay2]').forEach(b => b.addEventListener('click', async () => {
     const m = memos.find(x => x.id === b.dataset.mplay2);
-    openMemoPlayer(m, b.closest('.memo-row'));
+    const mm = await ensureMemoBlob(m, b);
+    if (mm) openMemoPlayer(mm, b.closest('.memo-row'));
   }));
   host.querySelectorAll('[data-mdel2]').forEach(b => b.addEventListener('click', async () => {
-    await memoDel(b.dataset.mdel2); stopMemo(); renderMemoList(sel, songId); toast('Memo gelöscht');
+    await memoDelFull(b.dataset.mdel2); stopMemo(); renderMemoList(sel, songId); toast('Memo gelöscht');
   }));
 }
 
@@ -2100,7 +2102,7 @@ document.addEventListener('click', e => {
   if (sc) { const s = S.songs.find(x => x.id === sc.dataset.song); if (s) viewSong(s); }
 });
 
-/* --- Sprachmemos (IndexedDB, Audio bleibt nur auf dem Gerät) --- */
+/* --- Sprachmemos (IndexedDB lokal + Cloud-Backup im yan-data-Repo) --- */
 function memoDb() {
   return new Promise((res, rej) => {
     const r = indexedDB.open('yanapp-media', 1);
@@ -2110,14 +2112,111 @@ function memoDb() {
 }
 async function memoAdd(m) { const db = await memoDb(); return new Promise((res, rej) => { const tx = db.transaction('memos', 'readwrite'); tx.objectStore('memos').put(m); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); }
 async function memoDel(id) { const db = await memoDb(); return new Promise(res => { const tx = db.transaction('memos', 'readwrite'); tx.objectStore('memos').delete(id); tx.oncomplete = res; }); }
-async function memoAll(songId) {
+async function memoAllRaw(filter) {
   const db = await memoDb();
   return new Promise(res => {
     const out = [];
     const c = db.transaction('memos').objectStore('memos').openCursor();
-    c.onsuccess = e => { const cur = e.target.result; if (cur) { if (cur.value.songId === songId) out.push(cur.value); cur.continue(); } else res(out.sort((a, b) => b.ts - a.ts)); };
+    c.onsuccess = e => { const cur = e.target.result; if (cur) { if (!filter || filter(cur.value)) out.push(cur.value); cur.continue(); } else res(out); };
   });
 }
+/* Lokale Memos + Cloud-Index zusammenführen: andere Geräte sehen alle Aufnahmen */
+async function memoAll(songId) {
+  const local = await memoAllRaw(m => m.songId === songId);
+  const have = new Set(local.map(m => m.id));
+  const cloud = (S.memoIndex || []).filter(x => x.songId === songId && !have.has(x.id)).map(x => ({ ...x, cloud: true }));
+  return [...local, ...cloud].sort((a, b) => b.ts - a.ts);
+}
+
+/* --- Cloud-Backup für Audio (jede Aufnahme = eigene Datei, wird nur 1× übertragen) --- */
+const MEMO_API = 'https://api.github.com/repos/yanmushegera-web/yan-data/contents/memos/';
+const MEMO_MAX = 35 * 1024 * 1024; // ~35 MB roh (GitHub-API-Limit mit Base64-Puffer)
+const memoExt = t => /mp4|aac|m4a/.test(t || '') ? 'm4a' : /webm/.test(t || '') ? 'webm' : /ogg/.test(t || '') ? 'ogg' : /mpeg|mp3/.test(t || '') ? 'mp3' : 'bin';
+const memoMime = ext => ({ m4a: 'audio/mp4', webm: 'audio/webm', ogg: 'audio/ogg', mp3: 'audio/mpeg' }[ext] || 'application/octet-stream');
+function memoIndexPut(m, size, ext) {
+  if (!S.memoIndex) S.memoIndex = [];
+  S.memoIndex = S.memoIndex.filter(x => x.id !== m.id);
+  S.memoIndex.push({ id: m.id, songId: m.songId, secId: m.secId || null, name: m.name || '', ts: m.ts, size, ext });
+  save();
+}
+async function memoCloudUpload(m) {
+  if (!S.syncToken || !navigator.onLine || !m.blob) return false;
+  if (m.blob.size > MEMO_MAX) { if (!m.tooBig) { m.tooBig = true; await memoAdd(m); toast('Aufnahme zu groß fürs Cloud-Backup – bleibt nur auf diesem Gerät'); } return false; }
+  try {
+    const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = () => rej(fr.error); fr.readAsDataURL(m.blob); });
+    const ext = m.ext || memoExt(m.blob.type);
+    const url = MEMO_API + m.id + '.' + ext;
+    let sha = null;
+    const g = await fetch(url, { headers: { authorization: 'Bearer ' + S.syncToken } });
+    if (g.ok) sha = (await g.json()).sha;
+    const body = { message: 'memo: ' + (m.name || m.id), content: b64 };
+    if (sha) body.sha = sha;
+    const r = await fetch(url, { method: 'PUT', headers: { authorization: 'Bearer ' + S.syncToken, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) return false;
+    m.uploaded = true; m.ext = ext;
+    await memoAdd(m);
+    memoIndexPut(m, m.blob.size, ext);
+    return true;
+  } catch (e) { return false; }
+}
+/* Cloud-Memo beim ersten Abspielen aufs Gerät holen */
+async function ensureMemoBlob(m, btn) {
+  if (!m) return null;
+  if (m.blob) return m;
+  if (!S.syncToken) { toast('Aufnahme liegt in der Cloud – Sync-Schlüssel fehlt auf diesem Gerät'); return null; }
+  const idle = btn ? btn.innerHTML : null;
+  if (btn) btn.innerHTML = '…';
+  try {
+    const r = await fetch(MEMO_API + m.id + '.' + (m.ext || 'm4a'), { headers: { authorization: 'Bearer ' + S.syncToken, accept: 'application/vnd.github.raw+json' } });
+    if (!r.ok) { toast('Memo konnte nicht geladen werden (' + r.status + ')'); if (btn) btn.innerHTML = idle; return null; }
+    const buf = await r.arrayBuffer();
+    const rec = { id: m.id, songId: m.songId, secId: m.secId || null, name: m.name || '', blob: new Blob([buf], { type: memoMime(m.ext) }), ts: m.ts, uploaded: true, ext: m.ext };
+    await memoAdd(rec);
+    if (btn) btn.innerHTML = idle;
+    return rec;
+  } catch (e) { toast('Offline? Memo konnte nicht geladen werden'); if (btn) btn.innerHTML = idle; return null; }
+}
+/* Löschen: lokal sofort, remote mit Warteschlange (überlebt Offline-Phasen) */
+async function memoDelFull(id) {
+  const idx = (S.memoIndex || []).find(x => x.id === id);
+  const local = (await memoAllRaw(m => m.id === id))[0];
+  await memoDel(id);
+  if (idx || (local && local.uploaded)) {
+    const q = store.get('yanapp_memodel', []);
+    if (!q.some(x => x.id === id)) { q.push({ id, ext: (idx && idx.ext) || (local && local.ext) || 'm4a' }); store.set('yanapp_memodel', q); }
+  }
+  if (idx) { S.memoIndex = S.memoIndex.filter(x => x.id !== id); save(); }
+  processMemoDeletions();
+}
+async function processMemoDeletions() {
+  if (!S.syncToken || !navigator.onLine) return;
+  const q = store.get('yanapp_memodel', []);
+  for (const item of q.slice()) {
+    try {
+      const url = MEMO_API + item.id + '.' + item.ext;
+      const g = await fetch(url, { headers: { authorization: 'Bearer ' + S.syncToken } });
+      if (g.ok) {
+        const sha = (await g.json()).sha;
+        const r = await fetch(url, { method: 'DELETE', headers: { authorization: 'Bearer ' + S.syncToken, 'content-type': 'application/json' }, body: JSON.stringify({ message: 'memo gelöscht', sha }) });
+        if (!r.ok && r.status !== 404) continue;
+      } else if (g.status !== 404) continue;
+      store.set('yanapp_memodel', store.get('yanapp_memodel', []).filter(x => x.id !== item.id));
+    } catch (e) {}
+  }
+}
+/* Aufräum-Durchlauf: hängengebliebene Uploads/Löschungen nachholen */
+let memoSweepBusy = false;
+async function memoSyncSweep() {
+  if (!S.syncToken || !navigator.onLine || memoSweepBusy) return;
+  memoSweepBusy = true;
+  try {
+    await processMemoDeletions();
+    const pending = await memoAllRaw(m => !m.uploaded && !m.tooBig && m.blob);
+    for (const m of pending) await memoCloudUpload(m);
+  } finally { memoSweepBusy = false; }
+}
+setTimeout(memoSyncSweep, 5000);
+window.addEventListener('online', () => setTimeout(memoSyncSweep, 2000));
 let recMedia = null, recChunks = [], recStream = null, memoAudio = null;
 
 /* --- PDF-Songsheet (ohne Fremdbibliothek, offline) --- */
@@ -2313,10 +2412,12 @@ function sheetSong(s) {
         const blob = new Blob(recChunks, { type: recMedia.mimeType || 'audio/mp4' });
         const all = await memoAll(tmp.id);
         const nr = all.filter(m => m.secId === secId).length + 1;
-        await memoAdd({ id: uid(), songId: tmp.id, secId: secId || null, name: secId ? 'Take ' + nr : '', blob, ts: Date.now() });
+        const rec = { id: uid(), songId: tmp.id, secId: secId || null, name: secId ? 'Take ' + nr : '', blob, ts: Date.now() };
+        await memoAdd(rec);
         btn.classList.remove('rec');
         btn.innerHTML = idle;
         renderMemos(); toast('Aufnahme gespeichert 🎙️'); vibrate();
+        memoCloudUpload(rec).then(ok => { if (ok) toast('☁️ Auch in der Cloud gesichert'); });
       };
       recMedia.start();
       btn.classList.add('rec');
@@ -2333,18 +2434,25 @@ function sheetSong(s) {
         <div class="memo-row" data-mrow="${m.id}">
           <button class="memo-play" data-tplay="${m.id}"><span class="msr">${ICON.play_arrow}</span></button>
           <input class="take-name" data-tname="${m.id}" value="${esc(m.name || 'Take')}" placeholder="Topline / Version…">
+          ${m.cloud ? `<span class="msr" style="font-size:13px;color:var(--text-3)">${ICON.download}</span>` : ''}
           <button class="memo-del" data-tdel2="${m.id}">✕</button>
         </div>`).join('');
-      host.querySelectorAll('[data-tplay]').forEach(b => b.addEventListener('click', () => {
+      host.querySelectorAll('[data-tplay]').forEach(b => b.addEventListener('click', async () => {
         const m = takes.find(x => x.id === b.dataset.tplay);
-        openMemoPlayer(m, b.closest('.memo-row'));
+        const mm = await ensureMemoBlob(m, b);
+        if (mm) openMemoPlayer(mm, b.closest('.memo-row'));
       }));
       host.querySelectorAll('[data-tname]').forEach(inp => inp.addEventListener('change', async () => {
         const m = takes.find(x => x.id === inp.dataset.tname);
-        if (m) { m.name = inp.value.trim(); await memoAdd(m); toast('Umbenannt'); }
+        if (!m) return;
+        m.name = inp.value.trim();
+        if (!m.cloud) await memoAdd(m);
+        const idx = (S.memoIndex || []).find(x => x.id === m.id);
+        if (idx) { idx.name = m.name; save(); }
+        toast('Umbenannt');
       }));
       host.querySelectorAll('[data-tdel2]').forEach(b => b.addEventListener('click', async () => {
-        await memoDel(b.dataset.tdel2); stopMemo(); renderMemos(); toast('Take gelöscht');
+        await memoDelFull(b.dataset.tdel2); stopMemo(); renderMemos(); toast('Take gelöscht');
       }));
     });
     document.querySelectorAll('[data-srec]').forEach(b => {
@@ -2377,6 +2485,7 @@ function sheetSong(s) {
     });
     $('#sg-del').addEventListener('click', () => {
       S.songs = S.songs.filter(x => x.id !== tmp.id);
+      memoAll(tmp.id).then(list => list.forEach(m => memoDelFull(m.id))); // Audio lokal + Cloud aufräumen
       save(); closeSheet(); renderMehr(); toast('Song gelöscht');
     });
   }
@@ -2786,7 +2895,7 @@ $('#btn-settings').addEventListener('click', () => {
     const newSyncToken = $('#set-synctoken').value.trim() || null;
     const syncChanged = newSyncToken !== S.syncToken;
     S.syncToken = newSyncToken;
-    if (syncChanged && S.syncToken) { cloudPull().then(applied => { if (!applied) cloudPush(); toast('☁️ Sync verbunden'); }); }
+    if (syncChanged && S.syncToken) { cloudPull().then(applied => { if (!applied) cloudPush(); toast('☁️ Sync verbunden'); memoSyncSweep(); }); }
     const newCalToken = $('#set-caltoken').value.trim() || null;
     const calChanged = newCalToken !== S.calToken;
     S.calToken = newCalToken;
@@ -3554,8 +3663,8 @@ document.addEventListener('click', e => {
     requestAnimationFrame(() => { wrap.classList.add('removing'); });
     setTimeout(() => {
       if (kind === 'note') S.notes = S.notes.filter(x => x.id !== id);
-      if (kind === 'song') S.songs = S.songs.filter(x => x.id !== id);
-      save(); renderAll(); toast('Gelöscht'); 
+      if (kind === 'song') { S.songs = S.songs.filter(x => x.id !== id); memoAll(id).then(list => list.forEach(m => memoDelFull(m.id))); }
+      save(); renderAll(); toast('Gelöscht');
     }, 260);
     vibrate();
     return;
