@@ -503,9 +503,9 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 
 /* Viewport-Fix: App misst ihre sichtbare Höhe selbst (--vh per JS),
    alle unteren Elemente hängen absolut an der ECHTEN Unterkante */
-html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 100%; overscroll-behavior: none; }
-#app { position: fixed; top: 0; left: 0; right: 0; height: calc(100dvh + var(--bargap, 0px)); }
-@supports not (height: 100dvh) { #app { height: calc(var(--vh, 100vh) + var(--bargap, 0px)); } }
+html, body { height: 100%; overflow: hidden; width: 100%; overscroll-behavior: none; }
+#app { position: relative; width: 100%; height: calc(100% + var(--bargap, 0px)); }
+
 .tabbar, .fab, .fab-mic, .sheet, .toast { position: absolute; }
 .sheet-backdrop { position: absolute; inset: 0; }
 
