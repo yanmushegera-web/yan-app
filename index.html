@@ -263,10 +263,11 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 51;
   background: var(--sheet-bg); border-radius: 24px 24px 0 0;
   padding: 10px 20px calc(var(--sab) + 20px);
-  transform: translateY(105%); transition: transform .32s cubic-bezier(.32,.72,.24,1);
+  transform: translateY(105%); transition: transform .32s cubic-bezier(.32,.72,.24,1), visibility 0s .35s;
+  visibility: hidden;
   max-height: 88dvh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,.2);
 }
-.sheet.open { transform: translateY(0); }
+.sheet.open { transform: translateY(0); visibility: visible; transition: transform .32s cubic-bezier(.32,.72,.24,1); }
 .grip { width: 38px; height: 4.5px; border-radius: 3px; background: var(--text-3); opacity: .4; margin: 4px auto 14px; }
 .sheet h3 { font-size: 19px; font-weight: 800; margin-bottom: 16px; letter-spacing: -.01em; }
 .f-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin: 14px 0 6px; text-transform: uppercase; letter-spacing: .03em; }
@@ -543,13 +544,15 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
 
 /* Dunkle Tab-Leiste, fest an der Unterkante angedockt */
 .tabbar {
-  left: 0; right: 0; bottom: 0;
-  border-radius: 22px 22px 0 0; border: none;
+  left: 12px; right: 12px;
+  bottom: max(10px, var(--sab));
+  border-radius: 999px; border: none;
   background: var(--nav-bg);
   backdrop-filter: saturate(160%) blur(18px);
   -webkit-backdrop-filter: saturate(160%) blur(18px);
-  padding: 8px 10px calc(var(--sab) * 0.3);
-  box-shadow: 0 -10px 34px rgba(19,19,22,.22);
+  padding: 9px 8px;
+  box-shadow: 0 12px 34px rgba(19,19,22,.32);
+  transform: translateY(var(--bargap, 0px));
 }
 [data-theme="dark"] .tabbar { box-shadow: 0 14px 38px rgba(0,0,0,.5); border: 1px solid var(--line); }
 .tab { color: #86868E; padding: 6px 14px; font-size: 0; gap: 0; }
@@ -559,18 +562,20 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
 [data-theme="dark"] .tab.on { color: #F4F3EC; }
 .tab.on .t-ic { animation: tabBounce .3s cubic-bezier(.34,1.56,.64,1); }
 @keyframes tabBounce { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: scale(1); } }
-@media (min-width: 700px) { .tabbar { max-width: 520px; left: 50%; transform: translateX(-50%); border-radius: 26px 26px 0 0; } }
+@media (min-width: 700px) { .tabbar { max-width: 520px; left: 50%; transform: translateX(-50%) translateY(var(--bargap, 0px)); border-radius: 999px; } }
 
 /* FABs */
 .fab {
   background: var(--lav); color: #131316;
-  bottom: calc(var(--sab) + 58px);
+  bottom: calc(max(10px, var(--sab)) + 70px);
   box-shadow: 0 12px 28px rgba(167,139,250,.5);
+  transform: translateY(var(--bargap, 0px));
 }
 .fab-mic {
   background: var(--pill); color: var(--pill-text); border: none;
-  bottom: calc(var(--sab) + 122px);
+  bottom: calc(max(10px, var(--sab)) + 134px);
   box-shadow: 0 10px 24px rgba(19,19,22,.3);
+  transform: translateY(var(--bargap, 0px));
 }
 
 /* Buttons & Sheets */
@@ -724,7 +729,7 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 .sheet .ms-add button { background: var(--lav); color: #131316; }
 
 /* Toast leicht anheben über der Pill-Nav */
-.toast { bottom: calc(var(--sab) + 64px); }
+.toast { bottom: calc(max(10px, var(--sab)) + 74px); transform: translateX(-50%) translateY(var(--bargap, 0px)); }
 
 /* ═══════════ V7 — Typografie, Icons, Farbe ═══════════ */
 body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -3100,6 +3105,15 @@ function renderAll() {
 }
 /* Echte sichtbare Höhe messen (iOS-Toolbar/Viewport-Bug) */
 let lastVH = 0;
+function fixBarGap() {
+  const standalone = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if (!standalone) return;
+  const gap = Math.round(screen.height - window.innerHeight);
+  document.documentElement.style.setProperty('--bargap', (gap > 0 && gap < 160 ? gap : 0) + 'px');
+}
+window.addEventListener('resize', fixBarGap);
+window.addEventListener('orientationchange', () => setTimeout(fixBarGap, 300));
+fixBarGap();
 function fitVH() {
   const h = window.innerHeight;
   if (h !== lastVH) {
