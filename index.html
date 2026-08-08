@@ -2334,7 +2334,7 @@ document.addEventListener('click', e => {
 function renderZiele() {
   const active = S.projects.filter(p => !p.archived);
   $('#project-list').innerHTML = active.length
-    ? active.slice().sort((a, b) => (a.deadline || '9999') < (b.deadline || '9999') ? -1 : 1).map(projRowHtml).join('')
+    ? active.slice().sort((a, b) => (a.deadline || '9999') < (b.deadline || '9999') ? -1 : 1).map(p => projRowHtml(p)).join('')
     : '<div class="empty"><span class="e-icon msr"></span>Noch keine Ziele.<br>Leg dein erstes an – z. B. „EP fertigstellen" oder ein Sparziel.</div>';
   $('#habit-list').innerHTML = S.habits.length ? S.habits.map(habitRowHtml).join('')
     : '<div class="empty"><span class="e-icon msr"></span>Noch keine Gewohnheiten.<br>Z. B. „Training", „Songwriting", „Lesen".</div>';
