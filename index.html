@@ -2212,16 +2212,16 @@ $('#btn-settings').addEventListener('click', () => {
       <button class="chip" id="set-import" style="text-align:center;padding:11px"><span class="msr"></span> Backup laden</button>
     </div>
     <input type="file" id="set-import-file" accept=".json,application/json" style="display:none">
-    <div class="f-label">Menü-Leiste ausrichten</div>
-    <div class="num-step" style="margin-top:4px">
-      <button id="sab-down" style="width:auto;padding:0 18px;font-size:15px">Tiefer</button>
-      <div class="num-val" id="sab-val"></div>
-      <button id="sab-up" style="width:auto;padding:0 18px;font-size:15px">Höher</button>
-    </div>
-    <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">Wirkt sofort – stell die Leiste so ein, dass sie bündig über dem unteren Bildschirmrand liegt. „Auto" durch langes Drücken auf den Wert.</div>
     <div class="f-label">Admin</div>
     <button class="chip" id="adm-toggle" style="width:100%;text-align:center;padding:12px">🔐 Schlüssel & Verbindungen</button>
     <div id="adm-body" style="display:none">
+      <div class="f-label">Menü-Leiste ausrichten</div>
+      <div class="num-step" style="margin-top:4px">
+        <button id="sab-down" style="width:auto;padding:0 18px;font-size:15px">Tiefer</button>
+        <div class="num-val" id="sab-val"></div>
+        <button id="sab-up" style="width:auto;padding:0 18px;font-size:15px">Höher</button>
+      </div>
+      <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">Wirkt sofort. „Auto" durch langes Drücken auf den Wert.</div>
       <div class="f-label">Kalender-Sync (Google & Arbeit)</div>
       <input class="f-input" type="password" id="set-caltoken" placeholder="Sync-Schlüssel (github_pat_…)" autocapitalize="off" autocorrect="off" value="${esc(S.calToken || '')}">
       <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">
