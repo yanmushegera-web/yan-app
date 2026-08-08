@@ -546,7 +546,7 @@ html { background: var(--bg); }
 /* Dunkle Tab-Leiste, fest an der Unterkante angedockt */
 .tabbar {
   left: 12px; right: 12px;
-  bottom: max(10px, var(--sab));
+  bottom: max(4px, var(--sab));
   border-radius: 999px; border: none;
   background: var(--nav-bg);
   backdrop-filter: saturate(160%) blur(18px);
@@ -562,7 +562,7 @@ html { background: var(--bg); }
 [data-theme="dark"] .tab.on { color: #F4F3EC; }
 .tab.on .t-ic { animation: tabBounce .3s cubic-bezier(.34,1.56,.64,1); }
 @keyframes tabBounce { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: scale(1); } }
-@media (min-width: 700px) { .tabbar { max-width: 520px; left: 50%; transform: translateX(-50%); border-radius: 999px; } }
+@media (min-width: 700px) { .tabbar { max-width: 520px; left: 50%; transform: translateX(-50%) translateY(var(--bargap, 0px)); border-radius: 999px; } }
 
 /* FABs */
 .fab {
@@ -788,9 +788,8 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 .tab.on::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--lime); margin-top: 1px; }
 .tab::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-top: 1px; }
 /* Boden-Elemente an der App-Fläche verankern (die bis zum echten Bildschirmrand reicht) */
-.fab, .fab-mic { position: absolute; }
-.toast { position: absolute; }
-.sheet { position: absolute; }
+.fab, .fab-mic, .toast, .tabbar { position: fixed; transform: translateY(var(--bargap, 0px)); }
+.sheet { position: fixed; bottom: calc(-1 * var(--bargap, 0px)); }
 .viewer { position: absolute; }
 
 /* ---------- Vollbild-Viewer ---------- */
@@ -3115,6 +3114,7 @@ function fixBarGap() {
   const gap = Math.round(screen.height - window.innerHeight);
   const g = (gap > 0 && gap < 160) ? gap : 0;
   document.documentElement.style.setProperty('--bargap', g + 'px');
+  if (g > 0) document.documentElement.style.setProperty('--sab', '0px');
   if (g > 0 && document.body) {
     const probe = document.createElement('div');
     probe.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);left:0;width:1px;height:1px;visibility:hidden;pointer-events:none';
