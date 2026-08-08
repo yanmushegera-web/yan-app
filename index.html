@@ -78,7 +78,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   position: absolute; inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: calc(var(--sat) + 14px) 18px calc(var(--sab) + 84px);
+  padding: calc(var(--sat) + 14px) 18px calc(var(--sab) + 62px);
   opacity: 0; transform: translateY(6px) scale(.995);
   pointer-events: none;
   transition: opacity .22s ease, transform .22s ease;
@@ -548,11 +548,13 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
   background: var(--nav-bg);
   backdrop-filter: saturate(160%) blur(18px);
   -webkit-backdrop-filter: saturate(160%) blur(18px);
-  padding: 7px 10px calc(var(--sab) * 0.6);
+  padding: 8px 10px calc(var(--sab) * 0.3);
   box-shadow: 0 -10px 34px rgba(19,19,22,.22);
 }
 [data-theme="dark"] .tabbar { box-shadow: 0 14px 38px rgba(0,0,0,.5); border: 1px solid var(--line); }
-.tab { color: #86868E; padding: 3px 10px; font-size: 10px; gap: 3px; }
+.tab { color: #86868E; padding: 6px 14px; font-size: 0; gap: 0; }
+.tab .t-ic.msr { font-size: 26px !important; }
+.tab.on { color: #F4F1EA; }
 .tab.on { color: #FAFAF5; }
 [data-theme="dark"] .tab.on { color: #F4F3EC; }
 .tab.on .t-ic { animation: tabBounce .3s cubic-bezier(.34,1.56,.64,1); }
@@ -562,12 +564,12 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
 /* FABs */
 .fab {
   background: var(--lav); color: #131316;
-  bottom: calc(var(--sab) + 78px);
+  bottom: calc(var(--sab) + 58px);
   box-shadow: 0 12px 28px rgba(167,139,250,.5);
 }
 .fab-mic {
   background: var(--pill); color: var(--pill-text); border: none;
-  bottom: calc(var(--sab) + 142px);
+  bottom: calc(var(--sab) + 122px);
   box-shadow: 0 10px 24px rgba(19,19,22,.3);
 }
 
@@ -587,6 +589,10 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
 
 /* Swipe-zum-Löschen (Aufgabenliste) */
 .task-swipe { position: relative; overflow: hidden; border-radius: 14px; }
+.task-swipe.sw-card { border-radius: 20px; margin-bottom: 14px; }
+.task-swipe.sw-card > .card { margin-bottom: 0; }
+.task-swipe .task-del-btn { opacity: 0; transition: opacity .15s; }
+.task-swipe.dragging .task-del-btn, .task-swipe.revealed .task-del-btn { opacity: 1; }
 .task-swipe .task-del-btn {
   position: absolute; right: 0; top: 0; bottom: 0; width: 88px;
   background: var(--danger); color: #fff; border: none; font-size: 20px;
@@ -718,7 +724,7 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 .sheet .ms-add button { background: var(--lav); color: #131316; }
 
 /* Toast leicht anheben über der Pill-Nav */
-.toast { bottom: calc(var(--sab) + 84px); }
+.toast { bottom: calc(var(--sab) + 64px); }
 
 /* ═══════════ V7 — Typografie, Icons, Farbe ═══════════ */
 body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -1511,7 +1517,7 @@ document.addEventListener('contextmenu', e => { if (e.target.closest('[data-link
 function renderNotes() {
   const list = S.notes.slice().sort((a,b) => b.updatedAt - a.updatedAt);
   $('#notes-list').innerHTML = list.length ? list.map(n =>
-    `<div class="task-swipe"><button class="task-del-btn" data-gdel="note:${n.id}" aria-label="Löschen"><span class="msr">${ICON.delete}</span></button><div class="card note-card" data-note="${n.id}">
+    `<div class="task-swipe sw-card"><button class="task-del-btn" data-gdel="note:${n.id}" aria-label="Löschen"><span class="msr">${ICON.delete}</span></button><div class="card note-card" data-note="${n.id}">
       <div class="note-text">${esc(n.text)}</div>
       <div class="note-date">${n.cat ? catTag(n.cat) + ' · ' : ''}${new Date(n.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
     </div></div>`).join('')
@@ -1704,7 +1710,7 @@ function renderSongs() {
   const list = S.songs.slice().sort((a, b) => b.updatedAt - a.updatedAt);
   $('#songs-list').innerHTML = list.length ? list.map(s => {
     const snippet = (s.sections || []).map(x => x.lyrics).filter(Boolean).join(' ').slice(0, 90);
-    return `<div class="task-swipe"><button class="task-del-btn" data-gdel="song:${s.id}" aria-label="Löschen"><span class="msr">${ICON.delete}</span></button><div class="card song-card" data-song="${s.id}">
+    return `<div class="task-swipe sw-card"><button class="task-del-btn" data-gdel="song:${s.id}" aria-label="Löschen"><span class="msr">${ICON.delete}</span></button><div class="card song-card" data-song="${s.id}">
       <div class="song-top">
         <div class="song-title">${icon('music_note')} ${esc(s.title)}</div>
         <span class="song-status s-${s.status === 'fertig' ? 'fertig' : s.status === 'arbeit' ? 'arbeit' : 'idee'}">${SONG_STATUS[s.status] || 'Idee'}</span>
@@ -3003,7 +3009,9 @@ document.addEventListener('pointerup', () => {
   wrap.classList.remove('dragging');
   if (active) {
     suppressClickUntil = Date.now() + 350;
-    row.style.transform = dx < -55 ? 'translateX(-88px)' : '';
+    const reveal = dx < -55;
+    row.style.transform = reveal ? 'translateX(-88px)' : '';
+    wrap.classList.toggle('revealed', reveal);
   }
   sw = null;
 }, { passive: true });
