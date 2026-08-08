@@ -1141,7 +1141,7 @@ if (!S.habits) S.habits = [];
 if (!S.songs) S.songs = [];
 // Migration: entfernte Bereiche auf "privat" mappen
 [S.tasks, S.events, S.notes, S.projects].forEach(list => (list || []).forEach(x => { if (x.cat === 'uni') x.cat = 'privat'; }));
-function save() { store.set('yanapp', S); }
+function save() { S.lastChange = Date.now(); store.set('yanapp', S); if (typeof scheduleCloudPush === 'function') scheduleCloudPush(); }
 
 /* ================= Lebensbereiche ================= */
 const CATS = [
@@ -1545,6 +1545,60 @@ document.addEventListener('click', e => {
   const n = e.target.closest('[data-note]');
   if (n) { const nn = S.notes.find(x => x.id === n.dataset.note); if (nn) viewNote(nn); }
 });
+
+/* ================= CLOUD-SYNC (privates GitHub-Repo) ================= */
+const SYNC_URL = 'https://api.github.com/repos/yanmushegera-web/yan-data/contents/backup.json';
+const SYNC_SKIP = ['calToken', 'apiKey', 'syncToken', 'sabAdjust', 'lastSyncAt', 'lastChange'];
+let syncTimer = null, syncSha = null;
+function b64enc(s) { return btoa(unescape(encodeURIComponent(s))); }
+function b64dec(s) { return decodeURIComponent(escape(atob(s))); }
+function syncPayload() {
+  const d = {};
+  Object.keys(S).forEach(k => { if (!SYNC_SKIP.includes(k)) d[k] = S[k]; });
+  return d;
+}
+function scheduleCloudPush() {
+  if (!S.syncToken) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(cloudPush, 20000);
+}
+async function cloudPush() {
+  if (!S.syncToken || !navigator.onLine) return;
+  try {
+    if (syncSha === null) {
+      const g = await fetch(SYNC_URL, { headers: { authorization: 'Bearer ' + S.syncToken } });
+      if (g.ok) syncSha = (await g.json()).sha;
+      else if (g.status === 404) syncSha = '';
+      else return;
+    }
+    const body = { message: 'sync', content: b64enc(JSON.stringify({ v: S.lastChange || Date.now(), data: syncPayload() })) };
+    if (syncSha) body.sha = syncSha;
+    const r = await fetch(SYNC_URL, { method: 'PUT', headers: { authorization: 'Bearer ' + S.syncToken, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    if (r.ok) { syncSha = (await r.json()).content.sha; S.lastSyncAt = Date.now(); store.set('yanapp', S); }
+    else if (r.status === 409) { syncSha = null; scheduleCloudPush(); }
+  } catch (e) {}
+}
+async function cloudPull() {
+  if (!S.syncToken || !navigator.onLine) return false;
+  try {
+    const r = await fetch(SYNC_URL, { headers: { authorization: 'Bearer ' + S.syncToken, accept: 'application/vnd.github+json' } });
+    if (!r.ok) return false;
+    const j = await r.json();
+    syncSha = j.sha;
+    const remote = JSON.parse(b64dec(j.content.replace(/\n/g, '')));
+    if (remote && remote.v && remote.v > (S.lastChange || 0)) {
+      Object.assign(S, remote.data);
+      S.lastChange = remote.v; S.lastSyncAt = Date.now();
+      store.set('yanapp', S);
+      renderAll();
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+window.addEventListener('online', () => scheduleCloudPush());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) cloudPull(); });
+setTimeout(cloudPull, 1500);
 
 /* ================= WETTER ================= */
 const WMO = {0:['☀️','Klar'],1:['🌤','Überwiegend klar'],2:['⛅️','Teils bewölkt'],3:['☁️','Bedeckt'],45:['🌫','Nebel'],48:['🌫','Reifnebel'],51:['🌦','Leichter Niesel'],53:['🌦','Niesel'],55:['🌧','Starker Niesel'],61:['🌦','Leichter Regen'],63:['🌧','Regen'],65:['🌧','Starker Regen'],66:['🌧','Gefrierender Regen'],67:['🌧','Gefrierender Regen'],71:['🌨','Leichter Schnee'],73:['🌨','Schnee'],75:['❄️','Starker Schnee'],77:['🌨','Schneegriesel'],80:['🌦','Schauer'],81:['🌧','Schauer'],82:['⛈','Starke Schauer'],85:['🌨','Schneeschauer'],86:['🌨','Schneeschauer'],95:['⛈','Gewitter'],96:['⛈','Gewitter mit Hagel'],99:['⛈','Gewitter mit Hagel']};
@@ -2270,6 +2324,11 @@ $('#btn-settings').addEventListener('click', () => {
       <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">
         Verbindet deine Kalender (schreibgeschützt, aktualisiert alle ~20 Min). Der Schlüssel bleibt nur auf deinem Gerät.
       </div>
+      <div class="f-label">Cloud-Backup & Geräte-Sync</div>
+      <input class="f-input" type="password" id="set-synctoken" placeholder="Sync-Schlüssel (github_pat_…)" autocapitalize="off" autocorrect="off" value="${esc(S.syncToken || '')}">
+      <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5" id="sync-status">
+        Sichert deine Daten automatisch in dein privates Daten-Repo und hält mehrere Geräte synchron. ${S.lastSyncAt ? 'Zuletzt gesichert: ' + new Date(S.lastSyncAt).toLocaleString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+      </div>
       <div class="f-label">KI-Analyse (Claude)</div>
       <input class="f-input" type="password" id="set-apikey" placeholder="API-Schlüssel (sk-ant-…)" autocapitalize="off" autocorrect="off" value="${esc(S.apiKey || '')}">
       <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">
@@ -2350,6 +2409,10 @@ $('#btn-settings').addEventListener('click', () => {
   $('#set-save').addEventListener('click', () => {
     S.name = $('#set-name').value.trim() || 'Yan';
     S.apiKey = $('#set-apikey').value.trim() || null;
+    const newSyncToken = $('#set-synctoken').value.trim() || null;
+    const syncChanged = newSyncToken !== S.syncToken;
+    S.syncToken = newSyncToken;
+    if (syncChanged && S.syncToken) { cloudPull().then(applied => { if (!applied) cloudPush(); toast('☁️ Sync verbunden'); }); }
     const newCalToken = $('#set-caltoken').value.trim() || null;
     const calChanged = newCalToken !== S.calToken;
     S.calToken = newCalToken;
