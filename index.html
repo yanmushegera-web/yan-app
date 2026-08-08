@@ -1811,7 +1811,11 @@ async function loadWeather() {
     if (cached && Date.now() - cached.ts < 30 * 60 * 1000) { renderWeather(cached.d); return; }
     let lat = 48.6256, lon = 9.3411;
     try {
-      const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 3500, maximumAge: 3600000 }));
+      // Hartes Timeout: falls der Berechtigungs-Dialog unbeantwortet bleibt, kommt trotzdem Wetter (Fallback-Ort)
+      const pos = await Promise.race([
+        new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 3500, maximumAge: 3600000 })),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('geo-timeout')), 4000))
+      ]);
       lat = pos.coords.latitude; lon = pos.coords.longitude;
     } catch (e) {}
     const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FBerlin&forecast_days=1`);
