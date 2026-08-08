@@ -592,6 +592,9 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
   background: var(--danger); color: #fff; border: none; font-size: 20px;
   display: grid; place-items: center; cursor: pointer;
 }
+.task-swipe > .card { position: relative; z-index: 1; transition: transform .22s cubic-bezier(.32,.72,.25,1); margin-top: 0 !important; }
+.task-swipe { margin-top: 12px; }
+.task-swipe.dragging > .card { transition: none; }
 .task-swipe .task-row {
   background: var(--card); position: relative; z-index: 1;
   transition: transform .22s cubic-bezier(0,0,.2,1);
@@ -775,6 +778,110 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 .cat-chip, .chip, .seg button { transition: transform .12s ease, background .18s ease, color .18s ease, border-color .18s ease; }
 .tab.on::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--lime); margin-top: 1px; }
 .tab::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-top: 1px; }
+/* ---------- Vollbild-Viewer ---------- */
+.viewer {
+  position: fixed; inset: 0; z-index: 70; background: var(--bg);
+  transform: translateX(103%); transition: transform .32s cubic-bezier(.32,.72,.25,1);
+  display: flex; flex-direction: column;
+}
+.viewer.open { transform: translateX(0); }
+.vw-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: calc(var(--sat) + 10px) 14px 10px;
+}
+.vw-btn {
+  width: 46px; height: 46px; border-radius: 50%; border: none; background: var(--card);
+  color: var(--text); font-size: 21px; display: grid; place-items: center; cursor: pointer;
+  box-shadow: 0 2px 10px rgba(19,19,22,.06);
+}
+.vw-edit { background: var(--pill); color: var(--pill-text); }
+.vw-kind { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); }
+.vw-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 20px calc(var(--sab) + 40px); }
+.vw-title { font-size: 30px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; margin: 6px 0 14px; }
+.vw-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.vw-pill { font-size: 12.5px; font-weight: 700; background: var(--card); border-radius: 999px; padding: 7px 13px; color: var(--text-2); }
+.vw-pill b { color: var(--text); }
+.vw-text { font-size: 16.5px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
+.vw-sec { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); margin: 26px 0 10px; }
+.vw-link-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: var(--card); border: none; border-radius: 16px; padding: 14px 16px;
+  font-family: inherit; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; margin-top: 8px;
+}
+.vw-link-row .msr { color: var(--lav); font-size: 20px; }
+.vw-song-sec { margin: 0 0 22px; }
+.vw-song-type { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--lav); margin-bottom: 6px; }
+.vw-song-chords { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 14.5px; color: #7c9a00; font-weight: 700; margin-bottom: 6px; }
+[data-theme="dark"] .vw-song-chords { color: var(--lime); }
+.vw-song-lyrics { font-size: 16.5px; line-height: 1.7; white-space: pre-wrap; }
+
+/* ---------- Memo-Player ---------- */
+.mp { background: var(--card-2); border-radius: 16px; padding: 14px; margin: 8px 0 10px; }
+.sheet .mp { background: #17171B; }
+.mp-seek { width: 100%; accent-color: var(--lav); height: 26px; }
+.mp-times { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-3); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.mp-ctrl { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 8px; }
+.mp-b {
+  border: none; background: var(--card); color: var(--text); border-radius: 999px;
+  min-width: 52px; height: 44px; font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer;
+}
+.sheet .mp-b { background: #232328; color: #F4F1EA; }
+.mp-b.mp-main { width: 58px; height: 58px; min-width: 58px; background: var(--lime); color: #131316; font-size: 26px; display: grid; place-items: center; }
+.pause-bars { display: inline-block; width: 14px; height: 16px; border-left: 5px solid currentColor; border-right: 5px solid currentColor; }
+
+/* ---------- Heute: Aufgaben-Tiles (verwandt mit Termin-Karten) ---------- */
+.ht-tile {
+  display: flex; align-items: center; gap: 12px; background: var(--card-2);
+  border-radius: 18px; padding: 13px 15px; margin-top: 10px;
+}
+[data-theme="dark"] .ht-tile { background: rgba(255,255,255,.05); }
+.ht-main { flex: 1; min-width: 0; }
+.ht-title { font-size: 15px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ht-tile.done .ht-title { text-decoration: line-through; color: var(--text-3); }
+.ht-meta { font-size: 12px; color: var(--text-2); font-weight: 600; margin-top: 3px; display: flex; gap: 7px; align-items: center; }
+.ht-time { font-size: 21px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.ht-time span { color: var(--text-3); }
+
+/* ---------- Ziele: Meilensteine groß & klar ---------- */
+.ms-list { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 4px; }
+.ms-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.ms-row span { font-size: 15px; font-weight: 600; flex: 1; }
+.ms-row.done span { text-decoration: line-through; color: var(--text-3); }
+.ms-check {
+  width: 30px; height: 30px; min-width: 30px; border-radius: 10px; border: 2px solid var(--text-3);
+  display: grid; place-items: center; font-size: 15px; color: transparent; cursor: pointer;
+}
+.ms-row.done .ms-check { background: var(--ok); border-color: var(--ok); color: #fff; }
+.num-step { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.num-step button {
+  width: 44px; height: 44px; border-radius: 14px; border: none; background: var(--card-2);
+  font-size: 22px; font-weight: 700; color: var(--text); cursor: pointer; font-family: inherit;
+}
+.num-step .num-val { flex: 1; text-align: center; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* ---------- Verknüpfungen ---------- */
+.link-chip {
+  display: inline-flex; align-items: center; gap: 7px; background: var(--accent-soft); color: var(--accent);
+  border-radius: 999px; padding: 8px 8px 8px 14px; font-size: 13px; font-weight: 700; margin: 0 6px 8px 0;
+}
+.link-chip button { border: none; background: none; color: inherit; font-size: 14px; width: 30px; height: 30px; cursor: pointer; }
+.pick-row {
+  display: block; width: 100%; text-align: left; background: var(--card-2); border: none;
+  border-radius: 12px; padding: 12px 14px; font-family: inherit; font-size: 14px; font-weight: 600;
+  color: var(--text); cursor: pointer; margin-top: 7px;
+}
+.sheet .pick-row { background: #17171B; color: #F4F1EA; }
+
+/* ---------- Größere Tap-Flächen ---------- */
+.ms-del, .memo-del { width: 42px; height: 42px; display: grid; place-items: center; font-size: 17px; }
+.memo-play { width: 46px; height: 46px; min-width: 46px; font-size: 20px; }
+.check { width: 30px; height: 30px; min-width: 30px; }
+.cal-nav button { width: 44px; height: 44px; }
+.hw-dot { width: 34px; height: 34px; }
+.ev-go { width: 40px; height: 40px; }
+.chip { min-height: 40px; }
+.mini-link { padding: 8px 10px; margin: -8px -10px; }
+
 /* ---------- Songwriting ---------- */
 .song-card { cursor: pointer; }
 .song-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -956,6 +1063,14 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
   </nav>
 
   <!-- Sheet -->
+  <div class="viewer" id="viewer">
+    <header class="vw-head">
+      <button class="vw-btn" id="vw-back"><span class="msr" style="display:inline-block;transform:rotate(180deg)">​</span></button>
+      <div class="vw-kind" id="vw-kind"></div>
+      <button class="vw-btn vw-edit" id="vw-edit"><span class="msr">​</span></button>
+    </header>
+    <div class="vw-body" id="vw-body"></div>
+  </div>
   <div class="sheet-backdrop" id="backdrop"></div>
   <div class="sheet" id="sheet"><div class="grip"></div><div id="sheet-content"></div></div>
 
@@ -1129,7 +1244,7 @@ let homeFilter = null;
 function evCardHtml(e, i) {
   const c = catById(e.cat);
   const tm = e.time ? e.time.split(':') : null;
-  return `<div class="ev-card ${['hl', 'c-lime', 'c-lav'][i % 3]}" ${e.ext ? '' : `data-ev="${e.id}"`}>
+  return `<div class="ev-card ${['hl', 'c-lime', 'c-lav'][i % 3]}" data-ev="${e.id}">
     <div class="ev-card-cat">${e.ext ? icon('calendar_month') + ' ' + esc(SRC_LABEL[e.src] || 'Kalender') : (c ? icon(c.icon) + ' ' + esc(c.label.split(' ')[0]) : icon('flag'))}</div>
     ${e.ext ? '' : `<button class="ev-go"><span class="msr"></span></button>`}
     <div class="ev-card-title">${esc(e.title)}</div>
@@ -1175,7 +1290,23 @@ function renderHome() {
   // Aufgaben (überfällig/heute zuerst, max 4)
   const sorted = open.filter(x => !homeFilter || x.cat === homeFilter)
     .sort((a, b) => (a.due || '9999') < (b.due || '9999') ? -1 : 1).slice(0, 4);
-  $('#home-tasks').innerHTML = sorted.length ? sorted.map(taskRowHtml).join('')
+  $('#home-tasks').innerHTML = sorted.length ? sorted.map(t => {
+    const c = catById(t.cat);
+    const overdue = t.due && t.due < todayIso();
+    const tm = t.dueTime ? t.dueTime.split(':') : null;
+    return `<div class="ht-tile ${t.done ? 'done' : ''}">
+      <div class="check" data-check="${t.id}">✓</div>
+      <div class="ht-main" data-edit="${t.id}">
+        <div class="ht-title">${esc(t.title)}</div>
+        <div class="ht-meta">
+          ${t.prio ? `<span class="prio-dot prio-${t.prio}"></span>` : ''}
+          ${t.due ? `<span ${overdue ? 'style="color:var(--danger)"' : ''}>${overdue ? '⚠︎ ' : ''}${esc(relDay(t.due))}</span>` : ''}
+          ${c ? `<span>${icon(c.icon)} ${esc(c.label.split(' ')[0])}</span>` : ''}
+        </div>
+      </div>
+      ${tm ? `<div class="ht-time">${esc(tm[0])}:<span>${esc(tm[1])}</span></div>` : ''}
+    </div>`;
+  }).join('')
     : '<div class="empty"><span class="e-icon msr"></span>Keine offenen Aufgaben</div>';
 
   // Gewohnheiten heute
@@ -1199,7 +1330,7 @@ function renderHome() {
     .sort((a, b) => (a.deadline || '9999') < (b.deadline || '9999') ? -1 : 1);
   if (activeP.length) {
     fc.style.display = '';
-    $('#home-focus').innerHTML = projRowHtml(activeP[0]);
+    $('#home-focus').innerHTML = projRowHtml(activeP[0], true);
   } else fc.style.display = 'none';
 }
 
@@ -1279,7 +1410,9 @@ document.addEventListener('click', e => {
   const row = e.target.closest('[data-ev]');
   if (row) {
     const ev = S.events.find(x => x.id === row.dataset.ev);
-    if (ev) sheetEvent(ev);
+    if (ev) { viewEvent(ev, false); return; }
+    const x = EXT.find(v => v.id === row.dataset.ev);
+    if (x) viewEvent(x, true);
   }
 });
 
@@ -1330,7 +1463,7 @@ document.addEventListener('click', e => {
     return;
   }
   const ed = e.target.closest('[data-edit]');
-  if (ed) sheetTask(S.tasks.find(x => x.id === ed.dataset.edit));
+  if (ed) { const t = S.tasks.find(x => x.id === ed.dataset.edit); if (t) viewTask(t); }
 });
 
 /* ================= LINKS ================= */
@@ -1369,16 +1502,190 @@ document.addEventListener('contextmenu', e => { if (e.target.closest('[data-link
 function renderNotes() {
   const list = S.notes.slice().sort((a,b) => b.updatedAt - a.updatedAt);
   $('#notes-list').innerHTML = list.length ? list.map(n =>
-    `<div class="card note-card" data-note="${n.id}">
+    `<div class="task-swipe"><button class="task-del-btn" data-gdel="note:${n.id}" aria-label="Löschen"><span class="msr">${ICON.delete}</span></button><div class="card note-card" data-note="${n.id}">
       <div class="note-text">${esc(n.text)}</div>
       <div class="note-date">${n.cat ? catTag(n.cat) + ' · ' : ''}${new Date(n.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
-    </div>`).join('')
+    </div></div>`).join('')
     : '<div class="empty"><span class="e-icon msr"></span>Noch keine Notizen.<br>Tippe auf ＋ um eine zu erstellen.</div>';
 }
 document.addEventListener('click', e => {
+  if (Date.now() < suppressClickUntil) return;
   const n = e.target.closest('[data-note]');
-  if (n) sheetNote(S.notes.find(x => x.id === n.dataset.note));
+  if (n) { const nn = S.notes.find(x => x.id === n.dataset.note); if (nn) viewNote(nn); }
 });
+
+/* ================= VOLLBILD-VIEWER ================= */
+let vwOnEdit = null;
+$('#vw-back .msr').textContent = ICON.chevron_right;
+$('#vw-edit .msr').textContent = ICON.edit_note;
+function openViewer(kind, bodyHtml, onEdit) {
+  $('#vw-kind').textContent = kind;
+  $('#vw-body').innerHTML = bodyHtml;
+  $('#vw-body').scrollTop = 0;
+  vwOnEdit = onEdit || null;
+  $('#vw-edit').style.display = onEdit ? '' : 'none';
+  $('#viewer').classList.add('open');
+}
+function closeViewer() { $('#viewer').classList.remove('open'); stopMemo(); }
+$('#vw-back').addEventListener('click', () => { closeViewer(); vibrate(); });
+$('#vw-edit').addEventListener('click', () => { const f = vwOnEdit; closeViewer(); if (f) setTimeout(f, 120); vibrate(); });
+
+function linkedNotesHtml(type, id) {
+  const notes = S.notes.filter(n => (n.links || []).some(l => l.t === type && l.id === id));
+  return notes.length ? `<div class="vw-sec">Verknüpfte Notizen</div>` + notes.map(n =>
+    `<button class="vw-link-row" data-vw-note="${n.id}"><span class="msr">${ICON.sticky_note_2}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.text.split('\n')[0].slice(0, 60))}</span></button>`).join('') : '';
+}
+function viewNote(n) {
+  const first = n.text.split('\n')[0];
+  const rest = n.text.split('\n').slice(1).join('\n').trim();
+  const linked = (n.links || []).map(l => {
+    if (l.t === 'task') { const t = S.tasks.find(x => x.id === l.id); return t ? `<button class="vw-link-row" data-vw-task="${t.id}"><span class="msr">${ICON.task_alt}</span><span style="flex:1">${esc(t.title)}</span>${t.done ? '✓' : ''}</button>` : ''; }
+    const ev = S.events.find(x => x.id === l.id); return ev ? `<button class="vw-link-row" data-vw-ev="${ev.id}"><span class="msr">${ICON.event}</span><span style="flex:1">${esc(ev.title)}</span><span style="color:var(--text-3);font-size:13px">${esc(relDay(ev.date))}</span></button>` : '';
+  }).join('');
+  openViewer('Notiz', `
+    <div class="vw-title">${esc(first)}</div>
+    <div class="vw-meta">
+      ${n.cat ? `<span class="vw-pill">${esc((catById(n.cat) || {}).label || '')}</span>` : ''}
+      <span class="vw-pill">${new Date(n.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</span>
+    </div>
+    ${rest ? `<div class="vw-text">${esc(rest)}</div>` : ''}
+    ${linked ? `<div class="vw-sec">Verknüpft mit</div>${linked}` : ''}
+  `, () => sheetNote(n));
+}
+function viewTask(t) {
+  const overdue = t.due && !t.done && t.due < todayIso();
+  openViewer('Aufgabe', `
+    <div class="vw-title" ${t.done ? 'style="text-decoration:line-through;color:var(--text-3)"' : ''}>${esc(t.title)}</div>
+    <div class="vw-meta">
+      ${t.due ? `<span class="vw-pill" ${overdue ? 'style="color:var(--danger)"' : ''}>${overdue ? '⚠︎ ' : ''}<b>${esc(relDay(t.due))}${t.dueTime ? ', ' + esc(t.dueTime) : ''}</b></span>` : ''}
+      ${t.prio ? `<span class="vw-pill">Prio: <b>${t.prio === 'hoch' ? '🔴 Hoch' : t.prio === 'mittel' ? '🟡 Mittel' : '🟢 Niedrig'}</b></span>` : ''}
+      ${t.cat ? `<span class="vw-pill">${esc((catById(t.cat) || {}).label || '')}</span>` : ''}
+    </div>
+    ${t.notes ? `<div class="vw-sec">Details</div><div class="vw-text">${esc(t.notes)}</div>` : ''}
+    ${linkedNotesHtml('task', t.id)}
+    <button class="btn ${t.done ? '' : 'btn-primary'} vw-done-btn" id="vw-task-done" style="margin-top:26px${t.done ? ';background:var(--card-2);color:var(--text)' : ''}">${t.done ? 'Wieder öffnen' : 'Erledigt ✓'}</button>
+  `, () => sheetTask(t));
+  $('#vw-task-done').addEventListener('click', () => {
+    t.done = !t.done; t.doneAt = t.done ? todayIso() : null;
+    save(); renderAll(); vibrate(); closeViewer();
+    if (t.done) toast('Erledigt ✓');
+  });
+}
+function viewEvent(ev, isExt) {
+  openViewer(isExt ? (SRC_LABEL[ev.src] || 'Kalender') + '-Termin' : 'Termin', `
+    <div class="vw-title">${esc(ev.title)}</div>
+    <div class="vw-meta">
+      <span class="vw-pill"><b>${esc(relDay(ev.date))}</b>${ev.time ? ', ' + esc(ev.time) + ' Uhr' : ''}</span>
+      ${ev.loc ? `<span class="vw-pill">📍 ${esc(ev.loc)}</span>` : ''}
+      ${!isExt && ev.cat ? `<span class="vw-pill">${esc((catById(ev.cat) || {}).label || '')}</span>` : ''}
+      ${isExt ? '<span class="vw-pill">🔒 Schreibgeschützt</span>' : ''}
+    </div>
+    ${ev.notes ? `<div class="vw-sec">Notizen</div><div class="vw-text">${esc(ev.notes)}</div>` : ''}
+    ${isExt ? '' : linkedNotesHtml('ev', ev.id)}
+  `, isExt ? null : () => sheetEvent(ev));
+}
+function viewSong(s) {
+  openViewer('Song', `
+    <div class="vw-title">${esc(s.title)}</div>
+    <div class="vw-meta">
+      <span class="song-status s-${s.status === 'fertig' ? 'fertig' : s.status === 'arbeit' ? 'arbeit' : 'idee'}">${SONG_STATUS[s.status] || 'Idee'}</span>
+      ${s.key ? `<span class="vw-pill">Tonart: <b>${esc(s.key)}</b></span>` : ''}
+      ${s.bpm ? `<span class="vw-pill"><b>${esc(String(s.bpm))}</b> BPM</span>` : ''}
+    </div>
+    ${(s.sections || []).map(sec => `<div class="vw-song-sec">
+      <div class="vw-song-type">${esc(sec.type)}</div>
+      ${sec.chords ? `<div class="vw-song-chords">${esc(sec.chords)}</div>` : ''}
+      ${sec.lyrics ? `<div class="vw-song-lyrics">${esc(sec.lyrics)}</div>` : ''}
+    </div>`).join('') || '<div class="empty">Noch keine Parts</div>'}
+    ${s.notes ? `<div class="vw-sec">Notizen</div><div class="vw-text">${esc(s.notes)}</div>` : ''}
+    <div class="vw-sec">Sprachmemos</div>
+    <div id="vw-memos"><div style="font-size:13px;color:var(--text-3)">Laden …</div></div>
+    <button class="btn" style="background:var(--lime);color:#131316;margin-top:24px" id="vw-song-pdf">${icon('picture_as_pdf')} Als PDF exportieren</button>
+  `, () => sheetSong(s));
+  renderMemoList('#vw-memos', s.id);
+  $('#vw-song-pdf').addEventListener('click', () => downloadSongPdf(s));
+}
+document.addEventListener('click', e => {
+  const vn = e.target.closest('[data-vw-note]');
+  if (vn) { const n = S.notes.find(x => x.id === vn.dataset.vwNote); if (n) viewNote(n); return; }
+  const vt = e.target.closest('[data-vw-task]');
+  if (vt) { const t = S.tasks.find(x => x.id === vt.dataset.vwTask); if (t) viewTask(t); return; }
+  const ve = e.target.closest('[data-vw-ev]');
+  if (ve) { const ev = S.events.find(x => x.id === ve.dataset.vwEv); if (ev) viewEvent(ev, false); }
+});
+
+/* ================= MEMO-PLAYER ================= */
+let MPA = null, mpTimer = null, mpOpenId = null;
+function fmtT(s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function stopMemo() {
+  if (MPA) { MPA.pause(); MPA = null; }
+  if (mpTimer) { clearInterval(mpTimer); mpTimer = null; }
+  mpOpenId = null;
+  document.querySelectorAll('.mp').forEach(el => el.remove());
+}
+function openMemoPlayer(m, rowEl) {
+  if (mpOpenId === m.id) { stopMemo(); return; }
+  stopMemo();
+  mpOpenId = m.id;
+  const panel = document.createElement('div');
+  panel.className = 'mp';
+  panel.innerHTML = `
+    <input type="range" class="mp-seek" min="0" max="1000" value="0">
+    <div class="mp-times"><span class="mp-cur">0:00</span><span class="mp-dur">…</span></div>
+    <div class="mp-ctrl">
+      <button class="mp-b" data-mp="back">−15</button>
+      <button class="mp-b mp-main" data-mp="toggle"><span class="pause-bars"></span></button>
+      <button class="mp-b" data-mp="fwd">+15</button>
+    </div>`;
+  rowEl.after(panel);
+  const a = new Audio(URL.createObjectURL(m.blob));
+  MPA = a;
+  let dur = 0;
+  const seek = panel.querySelector('.mp-seek'), cur = panel.querySelector('.mp-cur'), durEl = panel.querySelector('.mp-dur');
+  const mainBtn = panel.querySelector('[data-mp="toggle"]');
+  function setDur(d) { if (isFinite(d) && d > 0) { dur = d; durEl.textContent = fmtT(d); } }
+  a.onloadedmetadata = () => {
+    if (a.duration === Infinity) { a.currentTime = 1e7; a.ontimeupdate = () => { a.ontimeupdate = null; setDur(a.duration); a.currentTime = 0; a.play(); }; }
+    else setDur(a.duration);
+  };
+  a.onended = () => { mainBtn.innerHTML = `<span class="msr">${ICON.play_arrow}</span>`; };
+  mpTimer = setInterval(() => {
+    if (!MPA) return;
+    setDur(a.duration);
+    cur.textContent = fmtT(a.currentTime);
+    if (dur) seek.value = Math.round(a.currentTime / dur * 1000);
+  }, 200);
+  seek.addEventListener('input', () => { if (dur) a.currentTime = seek.value / 1000 * dur; });
+  panel.addEventListener('click', e => {
+    const b = e.target.closest('[data-mp]'); if (!b) return;
+    if (b.dataset.mp === 'toggle') {
+      if (a.paused) { a.play(); b.innerHTML = '<span class="pause-bars"></span>'; }
+      else { a.pause(); b.innerHTML = `<span class="msr">${ICON.play_arrow}</span>`; }
+    }
+    if (b.dataset.mp === 'back') a.currentTime = Math.max(0, a.currentTime - 15);
+    if (b.dataset.mp === 'fwd') a.currentTime = Math.min(dur || a.currentTime + 15, a.currentTime + 15);
+    vibrate();
+  });
+  a.play().catch(() => {});
+}
+async function renderMemoList(sel, songId) {
+  const memos = await memoAll(songId);
+  const host = document.querySelector(sel);
+  if (!host) return;
+  host.innerHTML = memos.length ? memos.map(m => `
+    <div class="memo-row" data-mrow="${m.id}">
+      <button class="memo-play" data-mplay2="${m.id}"><span class="msr">${ICON.play_arrow}</span></button>
+      <span class="memo-name">${new Date(m.ts).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}, ${new Date(m.ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr</span>
+      <button class="memo-del" data-mdel2="${m.id}">✕</button>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--text-3);padding:2px 0 6px">Noch keine Memos.</div>';
+  host.querySelectorAll('[data-mplay2]').forEach(b => b.addEventListener('click', () => {
+    const m = memos.find(x => x.id === b.dataset.mplay2);
+    openMemoPlayer(m, b.closest('.memo-row'));
+  }));
+  host.querySelectorAll('[data-mdel2]').forEach(b => b.addEventListener('click', async () => {
+    await memoDel(b.dataset.mdel2); stopMemo(); renderMemoList(sel, songId); toast('Memo gelöscht');
+  }));
+}
 
 /* ================= SONGWRITING ================= */
 let mehrMode = 'notizen';
@@ -1388,7 +1695,7 @@ function renderSongs() {
   const list = S.songs.slice().sort((a, b) => b.updatedAt - a.updatedAt);
   $('#songs-list').innerHTML = list.length ? list.map(s => {
     const snippet = (s.sections || []).map(x => x.lyrics).filter(Boolean).join(' ').slice(0, 90);
-    return `<div class="card song-card" data-song="${s.id}">
+    return `<div class="task-swipe"><button class="task-del-btn" data-gdel="song:${s.id}" aria-label="Löschen"><span class="msr">${ICON.delete}</span></button><div class="card song-card" data-song="${s.id}">
       <div class="song-top">
         <div class="song-title">${icon('music_note')} ${esc(s.title)}</div>
         <span class="song-status s-${s.status === 'fertig' ? 'fertig' : s.status === 'arbeit' ? 'arbeit' : 'idee'}">${SONG_STATUS[s.status] || 'Idee'}</span>
@@ -1400,7 +1707,7 @@ function renderSongs() {
         <span>${new Date(s.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}</span>
       </div>
       ${snippet ? `<div class="song-snippet">${esc(snippet)}…</div>` : ''}
-    </div>`;
+    </div></div>`;
   }).join('') : `<div class="empty"><span class="e-icon msr">${ICON.library_music}</span>Noch keine Songs.<br>Tippe auf ＋ für deinen ersten.</div>`;
 }
 function renderMehr() {
@@ -1417,8 +1724,9 @@ $('#mehr-mode').addEventListener('click', e => {
   renderMehr(); vibrate();
 });
 document.addEventListener('click', e => {
+  if (Date.now() < suppressClickUntil) return;
   const sc = e.target.closest('[data-song]');
-  if (sc) sheetSong(S.songs.find(x => x.id === sc.dataset.song));
+  if (sc) { const s = S.songs.find(x => x.id === sc.dataset.song); if (s) viewSong(s); }
 });
 
 /* --- Sprachmemos (IndexedDB, Audio bleibt nur auf dem Gerät) --- */
@@ -1573,24 +1881,7 @@ function sheetSong(s) {
     vibrate();
   });
   // Memos
-  async function renderMemos() {
-    const memos = await memoAll(tmp.id);
-    $('#sg-memos').innerHTML = memos.length ? memos.map(m => `
-      <div class="memo-row">
-        <button class="memo-play" data-mplay="${m.id}"><span class="msr">${ICON.play_arrow}</span></button>
-        <span class="memo-name">${new Date(m.ts).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}, ${new Date(m.ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr</span>
-        <button class="memo-del" data-mdel="${m.id}">✕</button>
-      </div>`).join('') : '<div style="font-size:13px;color:var(--text-3);padding:4px 0 8px">Noch keine Memos – summ deine Melodie einfach ein.</div>';
-    $('#sg-memos').querySelectorAll('[data-mplay]').forEach(b => b.addEventListener('click', async () => {
-      const m = memos.find(x => x.id === b.dataset.mplay);
-      if (memoAudio) { memoAudio.pause(); memoAudio = null; }
-      memoAudio = new Audio(URL.createObjectURL(m.blob));
-      memoAudio.play();
-    }));
-    $('#sg-memos').querySelectorAll('[data-mdel]').forEach(b => b.addEventListener('click', async () => {
-      await memoDel(b.dataset.mdel); renderMemos(); toast('Memo gelöscht');
-    }));
-  }
+  const renderMemos = () => renderMemoList('#sg-memos', tmp.id);
   renderMemos();
   $('#sg-rec').addEventListener('click', async () => {
     const btn = $('#sg-rec');
@@ -1818,12 +2109,48 @@ function sheetNote(n) {
     <textarea class="f-area" id="sn-text" placeholder="Schreib etwas auf…" style="min-height:140px">${n ? esc(n.text) : ''}</textarea>
     <div class="f-label">Lebensbereich</div>
     ${catChipsHtml('sn-cat', n ? n.cat : null)}
+    <div class="f-label">Verknüpfungen</div>
+    <div id="sn-links"></div>
+    <div class="chip-row">
+      <button class="chip" id="sn-link-task">＋ Aufgabe</button>
+      <button class="chip" id="sn-link-ev">＋ Termin</button>
+    </div>
+    <div id="sn-pick" style="display:none;max-height:220px;overflow-y:auto;margin-top:8px"></div>
     <button class="btn btn-primary" id="sn-save">Speichern</button>
     ${isNew ? '' : '<button class="btn" style="background:var(--accent-soft);color:var(--accent);margin-top:8px" id="sn-analyze"><span class="msr"></span> Analysieren → Aufgabe / Termin</button>'}
     ${isNew ? '' : '<button class="btn btn-ghost-danger" id="sn-del">Löschen</button>'}
   `);
   let cat = n ? n.cat || null : null;
   bindCatRow('sn-cat', v => cat = v);
+  const links = n && n.links ? n.links.slice() : [];
+  function renderNoteLinks() {
+    $('#sn-links').innerHTML = links.map((l, i) => {
+      const item = l.t === 'task' ? S.tasks.find(x => x.id === l.id) : S.events.find(x => x.id === l.id);
+      if (!item) return '';
+      return `<span class="link-chip">${l.t === 'task' ? icon('task_alt') : icon('event')} ${esc(item.title.slice(0, 26))}<button data-lrm="${i}">✕</button></span>`;
+    }).join('') || '<div style="font-size:13px;color:var(--text-3)">Keine Verknüpfungen</div>';
+    $('#sn-links').querySelectorAll('[data-lrm]').forEach(b => b.addEventListener('click', () => {
+      links.splice(+b.dataset.lrm, 1); renderNoteLinks();
+    }));
+  }
+  renderNoteLinks();
+  function showPicker(type) {
+    const pool = type === 'task'
+      ? S.tasks.filter(t => !t.done).slice(0, 15)
+      : S.events.filter(e => e.date >= iso(new Date(Date.now() - 7 * 864e5))).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 15);
+    const box = $('#sn-pick');
+    box.style.display = '';
+    box.innerHTML = pool.length ? pool.map(item =>
+      `<button class="pick-row" data-lpick="${type}:${item.id}">${esc(item.title)}${item.due || item.date ? ` <span style="color:var(--text-3)">· ${esc(relDay(item.due || item.date))}</span>` : ''}</button>`).join('')
+      : '<div style="font-size:13px;color:var(--text-3);padding:6px 0">Nichts zum Verknüpfen gefunden</div>';
+    box.querySelectorAll('[data-lpick]').forEach(b => b.addEventListener('click', () => {
+      const [t, id] = b.dataset.lpick.split(':');
+      if (!links.some(l => l.id === id)) links.push({ t, id });
+      box.style.display = 'none'; renderNoteLinks(); vibrate();
+    }));
+  }
+  $('#sn-link-task').addEventListener('click', () => showPicker('task'));
+  $('#sn-link-ev').addEventListener('click', () => showPicker('ev'));
   if (!isNew) $('#sn-analyze').addEventListener('click', () => {
     openCapture($('#sn-text').value.trim() || n.text);
   });
@@ -1831,8 +2158,8 @@ function sheetNote(n) {
   $('#sn-save').addEventListener('click', () => {
     const text = $('#sn-text').value.trim();
     if (!text) { toast('Notiz ist leer'); return; }
-    if (isNew) S.notes.push({ id: uid(), text, cat, updatedAt: Date.now() });
-    else Object.assign(n, { text, cat, updatedAt: Date.now() });
+    if (isNew) S.notes.push({ id: uid(), text, cat, links, updatedAt: Date.now() });
+    else Object.assign(n, { text, cat, links, updatedAt: Date.now() });
     save(); closeSheet(); renderAll(); toast('Gespeichert');
   });
   if (!isNew) $('#sn-del').addEventListener('click', () => {
@@ -1856,24 +2183,33 @@ $('#btn-settings').addEventListener('click', () => {
     <div class="f-label">Erinnerungen</div>
     <button class="chip" id="set-notify" style="width:100%;text-align:center;padding:11px">${('Notification' in window && Notification.permission === 'granted') ? '🔔 Benachrichtigungen aktiv' : '🔔 Benachrichtigungen aktivieren'}</button>
     <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">Erinnert dich an fällige Aufgaben mit Uhrzeit und an Termine (30 Min. vorher), solange die App installiert ist.</div>
-    <div class="f-label">Kalender-Sync (Google & Arbeit)</div>
-    <input class="f-input" type="password" id="set-caltoken" placeholder="Sync-Schlüssel (github_pat_…)" autocapitalize="off" autocorrect="off" value="${esc(S.calToken || '')}">
-    <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">
-      Verbindet deine Kalender (schreibgeschützt, aktualisiert alle ~20 Min). Der Schlüssel bleibt nur auf deinem Gerät.
-    </div>
     <div class="f-label">Daten</div>
     <div class="f-row">
       <button class="chip" id="set-export" style="text-align:center;padding:11px"><span class="msr"></span> Backup exportieren</button>
       <button class="chip" id="set-import" style="text-align:center;padding:11px"><span class="msr"></span> Backup laden</button>
     </div>
     <input type="file" id="set-import-file" accept=".json,application/json" style="display:none">
-    <div class="f-label">KI-Analyse (Claude)</div>
-    <input class="f-input" type="password" id="set-apikey" placeholder="API-Schlüssel (sk-ant-…)" autocapitalize="off" autocorrect="off" value="${esc(S.apiKey || '')}">
-    <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">
-      Mit Schlüssel analysiert Claude deine Eingaben: prägnante Aufgabennamen, strukturierte Notizen, Ziele mit Zwischenschritten. Ohne Schlüssel nutzt die App die schnelle Offline-Analyse. Schlüssel erstellen: <b>console.anthropic.com</b> → API Keys. Er wird nur auf deinem Gerät gespeichert.
+    <div class="f-label">Admin</div>
+    <button class="chip" id="adm-toggle" style="width:100%;text-align:center;padding:12px">🔐 Schlüssel & Verbindungen</button>
+    <div id="adm-body" style="display:none">
+      <div class="f-label">Kalender-Sync (Google & Arbeit)</div>
+      <input class="f-input" type="password" id="set-caltoken" placeholder="Sync-Schlüssel (github_pat_…)" autocapitalize="off" autocorrect="off" value="${esc(S.calToken || '')}">
+      <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">
+        Verbindet deine Kalender (schreibgeschützt, aktualisiert alle ~20 Min). Der Schlüssel bleibt nur auf deinem Gerät.
+      </div>
+      <div class="f-label">KI-Analyse (Claude)</div>
+      <input class="f-input" type="password" id="set-apikey" placeholder="API-Schlüssel (sk-ant-…)" autocapitalize="off" autocorrect="off" value="${esc(S.apiKey || '')}">
+      <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">
+        Claude veredelt deine Eingaben: prägnante Aufgabennamen, strukturierte Notizen, Ziele mit Zwischenschritten. Schlüssel erstellen: <b>console.anthropic.com</b> → API Keys. Bleibt nur auf deinem Gerät.
+      </div>
     </div>
     <button class="btn btn-primary" id="set-save">Speichern</button>
   `);
+  $('#adm-toggle').addEventListener('click', () => {
+    const b = $('#adm-body');
+    b.style.display = b.style.display === 'none' ? '' : 'none';
+    vibrate();
+  });
   $('#set-theme').addEventListener('click', e => {
     const b = e.target.closest('[data-t]'); if (!b) return;
     S.theme = b.dataset.t; applyTheme();
@@ -1932,7 +2268,7 @@ function projProgress(p) {
   if (p.milestones && p.milestones.length) return Math.round(p.milestones.filter(m => m.done).length / p.milestones.length * 100);
   return 0;
 }
-function projRowHtml(p) {
+function projRowHtml(p, compact) {
   const pct = projProgress(p);
   const nextMs = (p.milestones || []).find(m => !m.done);
   const c = catById(p.cat);
@@ -1944,12 +2280,44 @@ function projRowHtml(p) {
     <div class="proj-bar"><div style="width:${pct}%;${pct >= 100 ? 'background:var(--ok)' : (c ? 'background:' + c.color : '')}"></div></div>
     <div class="proj-meta">
       ${p.cat ? catTag(p.cat) : ''}
-      ${p.goalVal ? `<span><b>${p.currentVal || 0}</b> / ${p.goalVal} ${esc(p.unit || '')}</span>` : ''}
       ${p.deadline ? `<span>bis ${esc(relDay(p.deadline))}</span>` : ''}
-      ${nextMs ? `<span>· Nächster Schritt: ${esc(nextMs.title)}</span>` : ''}
+      ${compact && nextMs ? `<span>· Nächster Schritt: ${esc(nextMs.title)}</span>` : ''}
+      ${compact && p.goalVal ? `<span><b>${p.currentVal || 0}</b> / ${p.goalVal} ${esc(p.unit || '')}</span>` : ''}
     </div>
+    ${!compact && (p.milestones || []).length ? `<div class="ms-list">${p.milestones.map(m => `
+      <div class="ms-row ${m.done ? 'done' : ''}">
+        <div class="ms-check" data-msx="${p.id}:${m.id}">✓</div>
+        <span>${esc(m.title)}</span>
+      </div>`).join('')}</div>` : ''}
+    ${!compact && p.goalVal ? `<div class="num-step">
+      <button data-numstep="${p.id}:-1">−</button>
+      <div class="num-val">${p.currentVal || 0} / ${p.goalVal} ${esc(p.unit || '')}</div>
+      <button data-numstep="${p.id}:1">＋</button>
+    </div>` : ''}
   </div>`;
 }
+document.addEventListener('click', e => {
+  const ms = e.target.closest('[data-msx]');
+  if (ms) {
+    e.stopPropagation();
+    const [pid, mid] = ms.dataset.msx.split(':');
+    const p = S.projects.find(x => x.id === pid); if (!p) return;
+    const m = p.milestones.find(x => x.id === mid); if (!m) return;
+    m.done = !m.done;
+    if (m.done) { const r = ms.getBoundingClientRect(); confetti(r.left + 15, r.top + 15); toast(projProgress(p) >= 100 ? '🏆 Ziel erreicht!' : 'Meilenstein geschafft ✓'); }
+    save(); vibrate(); renderAll();
+    return;
+  }
+  const ns = e.target.closest('[data-numstep]');
+  if (ns) {
+    e.stopPropagation();
+    const [pid, dir] = ns.dataset.numstep.split(':');
+    const p = S.projects.find(x => x.id === pid); if (!p) return;
+    p.currentVal = Math.max(0, (p.currentVal || 0) + Number(dir) * (p.step || 1));
+    if (projProgress(p) >= 100) { const r = ns.getBoundingClientRect(); confetti(r.left + 20, r.top + 20, 24); toast('🏆 Ziel erreicht!'); }
+    save(); vibrate(); renderAll();
+  }
+}, true);
 function renderZiele() {
   const active = S.projects.filter(p => !p.archived);
   $('#project-list').innerHTML = active.length
@@ -2484,6 +2852,7 @@ $('#fab').addEventListener('click', () => {
 const CAL_DATA_URL = 'https://api.github.com/repos/yanmushegera-web/yan-data/contents/events.json';
 const SRC_LABEL = { google: 'Google', outlook: 'Arbeit' };
 let EXT = store.get('yanapp_ext', []);
+EXT.forEach((e, i) => { if (!e.id) e.id = 'x' + i; });
 let extLastSync = 0;
 async function syncExternal(force) {
   if (!S.calToken) return;
@@ -2496,7 +2865,7 @@ async function syncExternal(force) {
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     if (Array.isArray(data)) {
-      EXT = data; extLastSync = Date.now();
+      EXT = data; EXT.forEach((e, i) => { if (!e.id) e.id = 'x' + i; }); extLastSync = Date.now();
       store.set('yanapp_ext', EXT);
       renderAll();
     }
@@ -2586,7 +2955,8 @@ function countUp(el, target) {
 /* ================= Swipe-zum-Löschen (Aufgaben) ================= */
 let sw = null;
 document.addEventListener('pointerdown', e => {
-  const row = e.target.closest('.task-swipe .task-row');
+  const wrapEl = e.target.closest('.task-swipe');
+  const row = wrapEl ? wrapEl.querySelector(':scope > :not(.task-del-btn)') : null;
   if (!row) return;
   sw = { row, wrap: row.parentElement, x0: e.clientX, y0: e.clientY, dx: 0, active: false };
 }, { passive: true });
@@ -2613,6 +2983,20 @@ document.addEventListener('pointerup', () => {
 }, { passive: true });
 let suppressClickUntil = 0;
 document.addEventListener('click', e => {
+  const gdel = e.target.closest('[data-gdel]');
+  if (gdel) {
+    const [kind, id] = gdel.dataset.gdel.split(':');
+    const wrap = gdel.closest('.task-swipe');
+    wrap.style.maxHeight = wrap.offsetHeight + 'px';
+    requestAnimationFrame(() => { wrap.classList.add('removing'); });
+    setTimeout(() => {
+      if (kind === 'note') S.notes = S.notes.filter(x => x.id !== id);
+      if (kind === 'song') S.songs = S.songs.filter(x => x.id !== id);
+      save(); renderAll(); toast('Gelöscht'); 
+    }, 260);
+    vibrate();
+    return;
+  }
   const del = e.target.closest('.task-del-btn');
   if (del) {
     const wrap = del.closest('.task-swipe');
