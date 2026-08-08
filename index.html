@@ -3111,18 +3111,19 @@ let lastVH = 0;
 function fixBarGap() {
   const standalone = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
   if (!standalone) return;
-  const gap = Math.round(screen.height - window.innerHeight);
-  const g = (gap > 0 && gap < 160) ? gap : 0;
-  document.documentElement.style.setProperty('--bargap', g + 'px');
-  if (g > 0) document.documentElement.style.setProperty('--sab', '0px');
-  if (g > 0 && document.body) {
-    const probe = document.createElement('div');
-    probe.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);left:0;width:1px;height:1px;visibility:hidden;pointer-events:none';
-    document.body.appendChild(probe);
-    const satVal = probe.getBoundingClientRect().top;
-    probe.remove();
-    if (satVal < 20) document.documentElement.style.setProperty('--sat', '56px');
-  }
+  if (!document.body) return;
+  // env()-Werte messen — auf fehlerhaften Geräten liefern sie 0
+  const pTop = document.createElement('div');
+  pTop.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);left:0;width:1px;height:1px;visibility:hidden;pointer-events:none';
+  const pBot = document.createElement('div');
+  pBot.style.cssText = 'position:fixed;bottom:env(safe-area-inset-bottom,0px);left:0;width:1px;height:1px;visibility:hidden;pointer-events:none';
+  document.body.appendChild(pTop); document.body.appendChild(pBot);
+  const satVal = pTop.getBoundingClientRect().top;
+  const sabVal = window.innerHeight - pBot.getBoundingClientRect().bottom;
+  pTop.remove(); pBot.remove();
+  // Gerät meldet 0, obwohl Kamera-Aussparung/Home-Balken existieren → selbst setzen
+  if (satVal < 20) document.documentElement.style.setProperty('--sat', '56px');
+  if (sabVal < 10) document.documentElement.style.setProperty('--sab', '50px');
 }
 window.addEventListener('resize', fixBarGap);
 window.addEventListener('orientationchange', () => setTimeout(fixBarGap, 300));
