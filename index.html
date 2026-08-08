@@ -504,7 +504,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 /* Viewport-Fix: App misst ihre sichtbare Höhe selbst (--vh per JS),
    alle unteren Elemente hängen absolut an der ECHTEN Unterkante */
 html, body { height: 100%; overflow: hidden; width: 100%; overscroll-behavior: none; }
-#app { position: relative; width: 100%; height: calc(100% + var(--bargap, 0px)); }
+html { background: var(--bg); }
+#app { position: relative; width: 100%; height: 100%; }
 
 .tabbar, .fab, .fab-mic, .sheet, .toast { position: absolute; }
 .sheet-backdrop { position: absolute; inset: 0; }
