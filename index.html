@@ -546,7 +546,7 @@ html { background: var(--bg); }
 /* Dunkle Tab-Leiste, fest an der Unterkante angedockt */
 .tabbar {
   left: 12px; right: 12px;
-  bottom: max(4px, var(--sab));
+  bottom: max(0px, var(--sab));
   border-radius: 999px; border: none;
   background: var(--nav-bg);
   backdrop-filter: saturate(160%) blur(18px);
@@ -562,17 +562,17 @@ html { background: var(--bg); }
 [data-theme="dark"] .tab.on { color: #F4F3EC; }
 .tab.on .t-ic { animation: tabBounce .3s cubic-bezier(.34,1.56,.64,1); }
 @keyframes tabBounce { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: scale(1); } }
-@media (min-width: 700px) { .tabbar { max-width: 520px; left: 50%; transform: translateX(-50%) translateY(var(--bargap, 0px)); border-radius: 999px; } }
+@media (min-width: 700px) { .tabbar { max-width: 520px; left: 50%; transform: translateX(-50%); border-radius: 999px; } }
 
 /* FABs */
 .fab {
   background: var(--lav); color: #131316;
-  bottom: calc(max(10px, var(--sab)) + 70px);
+  bottom: calc(max(0px, var(--sab)) + 66px);
   box-shadow: 0 12px 28px rgba(167,139,250,.5);
 }
 .fab-mic {
   background: var(--pill); color: var(--pill-text); border: none;
-  bottom: calc(max(10px, var(--sab)) + 134px);
+  bottom: calc(max(0px, var(--sab)) + 130px);
   box-shadow: 0 10px 24px rgba(19,19,22,.3);
 }
 
@@ -727,7 +727,7 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 .sheet .ms-add button { background: var(--lav); color: #131316; }
 
 /* Toast leicht anheben über der Pill-Nav */
-.toast { bottom: calc(max(10px, var(--sab)) + 74px); }
+.toast { bottom: calc(max(0px, var(--sab)) + 70px); }
 
 /* ═══════════ V7 — Typografie, Icons, Farbe ═══════════ */
 body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -788,8 +788,8 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 .tab.on::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--lime); margin-top: 1px; }
 .tab::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-top: 1px; }
 /* Boden-Elemente an der App-Fläche verankern (die bis zum echten Bildschirmrand reicht) */
-.fab, .fab-mic, .toast, .tabbar { position: fixed; transform: translateY(var(--bargap, 0px)); }
-.sheet { position: fixed; bottom: calc(-1 * var(--bargap, 0px)); }
+.fab, .fab-mic, .toast, .tabbar { position: fixed; }
+.sheet { position: fixed; bottom: 0; }
 .viewer { position: absolute; }
 
 /* ---------- Vollbild-Viewer ---------- */
