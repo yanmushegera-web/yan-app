@@ -1768,6 +1768,7 @@ function viewSong(s) {
       <span class="song-status s-${s.status === 'fertig' ? 'fertig' : s.status === 'arbeit' ? 'arbeit' : 'idee'}">${SONG_STATUS[s.status] || 'Idee'}</span>
       ${s.key ? `<span class="vw-pill">Tonart: <b>${esc(s.key)}</b></span>` : ''}
       ${s.bpm ? `<span class="vw-pill"><b>${esc(String(s.bpm))}</b> BPM</span>` : ''}
+      ${s.lang ? `<span class="vw-pill">${esc(s.lang)}</span>` : ''}
     </div>
     ${(s.sections || []).map(sec => `<div class="vw-song-sec">
       <div class="vw-song-type">${esc(sec.type)}</div>
@@ -1913,6 +1914,7 @@ async function renderMemoList(sel, songId) {
 let mehrMode = 'notizen';
 const SONG_STATUS = { idee: 'Idee', arbeit: 'In Arbeit', fertig: 'Fertig' };
 const SEC_TYPES = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Outro'];
+const SONG_LANGS = ['Deutsch', 'Englisch', 'Französisch', 'Lingala'];
 function renderSongs() {
   const list = S.songs.slice().sort((a, b) => b.updatedAt - a.updatedAt);
   $('#songs-list').innerHTML = list.length ? list.map(s => {
@@ -1925,6 +1927,7 @@ function renderSongs() {
       <div class="song-meta">
         ${s.key ? `<span>${esc(s.key)}</span>` : ''}
         ${s.bpm ? `<span>${esc(String(s.bpm))} BPM</span>` : ''}
+        ${s.lang && s.lang !== 'Deutsch' ? `<span>${esc(s.lang)}</span>` : ''}
         <span>${(s.sections || []).length} Parts</span>
         <span>${new Date(s.updatedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}</span>
       </div>
@@ -2058,6 +2061,10 @@ function sheetSong(s) {
     <div class="chip-row" id="sg-status">
       ${Object.entries(SONG_STATUS).map(([k, v]) => `<button class="chip ${tmp.status === k ? 'on' : ''}" data-st="${k}">${v}</button>`).join('')}
     </div>
+    <div class="f-label">Sprache</div>
+    <div class="chip-row" id="sg-lang">
+      ${SONG_LANGS.map(l => `<button class="chip ${(tmp.lang || 'Deutsch') === l ? 'on' : ''}" data-lg="${l}">${l}</button>`).join('')}
+    </div>
     <div class="f-label">Song-Parts</div>
     <div id="sg-secs"></div>
     <div class="chip-row" id="sg-add-sec" style="margin-top:10px">
@@ -2073,6 +2080,12 @@ function sheetSong(s) {
     ${isNew ? '' : '<button class="btn btn-ghost-danger" id="sg-del">Song löschen</button>'}
   `);
   let status = tmp.status;
+  let lang = tmp.lang || 'Deutsch';
+  $('#sg-lang').addEventListener('click', e => {
+    const b = e.target.closest('[data-lg]'); if (!b) return;
+    lang = b.dataset.lg;
+    document.querySelectorAll('#sg-lang .chip').forEach(c => c.classList.toggle('on', c === b));
+  });
   $('#sg-status').addEventListener('click', e => {
     const b = e.target.closest('[data-st]'); if (!b) return;
     status = b.dataset.st;
@@ -2112,7 +2125,7 @@ function sheetSong(s) {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-api-key': S.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({ model: AI_MODELS[0], max_tokens: 600,
-          system: 'Du bist Songwriting-Partner für einen deutschen Künstler (Pop/Urban). Antworte NUR mit einem JSON-Array aus genau 4 Strings: Zeilen-Vorschläge (Weiterführungen, Alternativen oder Reime) für die angefragte Section. Kein Text drumherum. Ton: modern, bildhaft, singbar.',
+          system: `Du bist Songwriting-Partner für einen deutschen Künstler (Pop/Urban). Die Songtexte sind auf ${tmp.lang || lang || 'Deutsch'} – ALLE Vorschläge in dieser Sprache. Antworte NUR mit einem JSON-Array aus genau 4 Strings: Zeilen-Vorschläge (Weiterführungen, Alternativen oder Reime) für die angefragte Section. Kein Text drumherum. Ton: modern, bildhaft, singbar.`,
           messages: [{ role: 'user', content: `Song: ${tmp.title || 'Ohne Titel'}${tmp.key ? ', Tonart ' + tmp.key : ''}${tmp.bpm ? ', ' + tmp.bpm + ' BPM' : ''}\nNotizen: ${tmp.notes || '-'}\n\nBisheriger Song:\n${ctx}\n\nGib mir 4 Zeilen-Vorschläge für die Section [${sec.type}].` }] })
       });
       if (!res.ok) throw new Error('API ' + res.status);
@@ -2201,6 +2214,7 @@ function sheetSong(s) {
     tmp.key = $('#sg-key').value.trim();
     tmp.bpm = $('#sg-bpm').value.trim();
     tmp.status = status;
+    tmp.lang = lang;
     tmp.notes = $('#sg-notes').value.trim();
     tmp.updatedAt = Date.now();
     if (isNew) { S.songs.push(tmp); toast('Song angelegt 🎵'); }
