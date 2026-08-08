@@ -2212,6 +2212,13 @@ $('#btn-settings').addEventListener('click', () => {
       <button class="chip" id="set-import" style="text-align:center;padding:11px"><span class="msr"></span> Backup laden</button>
     </div>
     <input type="file" id="set-import-file" accept=".json,application/json" style="display:none">
+    <div class="f-label">Menü-Leiste ausrichten</div>
+    <div class="num-step" style="margin-top:4px">
+      <button id="sab-down" style="width:auto;padding:0 18px;font-size:15px">Tiefer</button>
+      <div class="num-val" id="sab-val"></div>
+      <button id="sab-up" style="width:auto;padding:0 18px;font-size:15px">Höher</button>
+    </div>
+    <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">Wirkt sofort – stell die Leiste so ein, dass sie bündig über dem unteren Bildschirmrand liegt. „Auto" durch langes Drücken auf den Wert.</div>
     <div class="f-label">Admin</div>
     <button class="chip" id="adm-toggle" style="width:100%;text-align:center;padding:12px">🔐 Schlüssel & Verbindungen</button>
     <div id="adm-body" style="display:none">
@@ -2228,6 +2235,30 @@ $('#btn-settings').addEventListener('click', () => {
     </div>
     <button class="btn btn-primary" id="set-save">Speichern</button>
   `);
+  function sabCurrent() {
+    if (S.sabAdjust != null) return S.sabAdjust;
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab'));
+    return isNaN(v) ? 34 : Math.round(v);
+  }
+  function sabShow() { $('#sab-val').textContent = (S.sabAdjust != null ? S.sabAdjust + ' px' : 'Auto (' + sabCurrent() + ' px)'); }
+  function sabSet(v) {
+    S.sabAdjust = Math.max(0, Math.min(140, v));
+    save();
+    document.documentElement.style.setProperty('--sab', S.sabAdjust + 'px');
+    sabShow(); vibrate();
+  }
+  sabShow();
+  $('#sab-down').addEventListener('click', () => sabSet(sabCurrent() - 6));
+  $('#sab-up').addEventListener('click', () => sabSet(sabCurrent() + 6));
+  let sabPress = null;
+  $('#sab-val').addEventListener('pointerdown', () => {
+    sabPress = setTimeout(() => {
+      S.sabAdjust = null; save();
+      document.documentElement.style.removeProperty('--sab');
+      fixBarGap(); sabShow(); toast('Automatik wiederhergestellt');
+    }, 700);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(ev => $('#sab-val').addEventListener(ev, () => clearTimeout(sabPress)));
   $('#adm-toggle').addEventListener('click', () => {
     const b = $('#adm-body');
     b.style.display = b.style.display === 'none' ? '' : 'none';
@@ -3123,7 +3154,11 @@ function fixBarGap() {
   pTop.remove(); pBot.remove();
   // Gerät meldet 0, obwohl Kamera-Aussparung/Home-Balken existieren → selbst setzen
   if (satVal < 20) document.documentElement.style.setProperty('--sat', '56px');
-  if (sabVal < 10) document.documentElement.style.setProperty('--sab', '50px');
+  if (typeof S !== 'undefined' && S.sabAdjust != null) {
+    document.documentElement.style.setProperty('--sab', S.sabAdjust + 'px');
+  } else if (sabVal < 10) {
+    document.documentElement.style.setProperty('--sab', '50px');
+  }
 }
 window.addEventListener('resize', fixBarGap);
 window.addEventListener('orientationchange', () => setTimeout(fixBarGap, 300));

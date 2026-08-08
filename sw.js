@@ -1,5 +1,5 @@
 /* Yan App – Service Worker */
-const VERSION = 'v7.10.2';
+const VERSION = 'v7.11.0';
 const CACHE = 'yan-app-' + VERSION;
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './sg-400.woff2', './sg-500.woff2', './sg-700.woff2', './msr.woff2'];
 
