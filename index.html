@@ -2329,6 +2329,9 @@ $('#btn-settings').addEventListener('click', () => {
       <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5" id="sync-status">
         Sichert deine Daten automatisch in dein privates Daten-Repo und hält mehrere Geräte synchron. ${S.lastSyncAt ? 'Zuletzt gesichert: ' + new Date(S.lastSyncAt).toLocaleString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
       </div>
+      <div class="f-label">Push-Erinnerungen (Termine, auch bei geschlossener App)</div>
+      <button class="chip" id="set-push" style="width:100%;text-align:center;padding:12px">${S.pushOn ? '🔔 Push aktiv – erneut koppeln' : '🔔 Push aktivieren'}</button>
+      <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">Benachrichtigt dich ~30 Min vor Terminen aus deinen Kalendern. Braucht den Sync-Schlüssel oben.</div>
       <div class="f-label">KI-Analyse (Claude)</div>
       <input class="f-input" type="password" id="set-apikey" placeholder="API-Schlüssel (sk-ant-…)" autocapitalize="off" autocorrect="off" value="${esc(S.apiKey || '')}">
       <div style="font-size:12.5px;color:var(--text-2);margin-top:7px;line-height:1.5">
@@ -2361,6 +2364,30 @@ $('#btn-settings').addEventListener('click', () => {
     }, 700);
   });
   ['pointerup','pointercancel','pointerleave'].forEach(ev => $('#sab-val').addEventListener(ev, () => clearTimeout(sabPress)));
+  $('#set-push').addEventListener('click', async () => {
+    S.syncToken = $('#set-synctoken').value.trim() || S.syncToken;
+    if (!S.syncToken) { toast('Bitte zuerst den Sync-Schlüssel eintragen'); return; }
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { toast('Benachrichtigungen wurden nicht erlaubt'); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const key = 'BLrCaejHaIu5PixoPEyFq22K9i21yo9YphpkO2o0drICfzmST8LLnRgFrFyQaVg7HJlKZYIWuxPessA3qyE11Jo';
+      const raw = atob(key.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(key.length / 4) * 4, '='));
+      const arr = new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: arr });
+      const url = 'https://api.github.com/repos/yanmushegera-web/yan-data/contents/subscription.json';
+      let sha = null;
+      const g = await fetch(url, { headers: { authorization: 'Bearer ' + S.syncToken } });
+      if (g.ok) sha = (await g.json()).sha;
+      const body = { message: 'push-sub', content: btoa(JSON.stringify(sub)) };
+      if (sha) body.sha = sha;
+      const r = await fetch(url, { method: 'PUT', headers: { authorization: 'Bearer ' + S.syncToken, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      if (!r.ok) { toast('Speichern fehlgeschlagen (' + r.status + ')'); return; }
+      S.pushOn = true; save();
+      $('#set-push').textContent = '🔔 Push aktiv – erneut koppeln';
+      toast('Push-Erinnerungen aktiv 🔔');
+    } catch (e) { toast('Push nicht möglich: ' + (e.message || e)); }
+  });
   $('#adm-toggle').addEventListener('click', () => {
     const b = $('#adm-body');
     b.style.display = b.style.display === 'none' ? '' : 'none';
