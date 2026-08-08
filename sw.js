@@ -1,5 +1,5 @@
 /* Yan App – Service Worker */
-const VERSION = 'v7.15.0';
+const VERSION = 'v7.16.0';
 const CACHE = 'yan-app-' + VERSION;
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './sg-400.woff2', './sg-500.woff2', './sg-700.woff2', './msr.woff2'];
 
@@ -44,7 +44,7 @@ self.addEventListener('fetch', e => {
 self.addEventListener('push', e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) {}
-  e.waitUntil(self.registration.showNotification(d.title || 'Yan App', {
+  e.waitUntil(self.registration.showNotification(d.title || 'YARVIS', {
     body: d.body || '', icon: './icon-192.png', badge: './icon-192.png', data: './'
   }));
 });

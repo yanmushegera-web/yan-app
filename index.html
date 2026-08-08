@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Yan</title>
+<title>YARVIS</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Yan">
+<meta name="apple-mobile-web-app-title" content="YARVIS">
 <meta name="theme-color" content="#0B0C10">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icon-180.png">
@@ -905,6 +905,17 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 .chip { min-height: 40px; }
 .mini-link { padding: 8px 10px; margin: -8px -10px; }
 
+/* ---------- Zeitachse ---------- */
+.tl-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; position: relative; }
+.tl-row.past { opacity: .38; }
+.tl-time { font-size: 13.5px; font-weight: 800; font-variant-numeric: tabular-nums; width: 46px; color: var(--text-2); }
+.tl-bar { width: 4px; height: 30px; border-radius: 3px; }
+.tl-main { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-tag { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.tl-now { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.tl-now .tl-line { flex: 1; height: 2px; background: var(--danger); border-radius: 2px; }
+.tl-now .tl-dot-now { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+
 /* ---------- Wetter ---------- */
 .wx-card { display: flex; align-items: center; gap: 14px; padding: 14px 18px; }
 .wx-ic { font-size: 34px; line-height: 1; }
@@ -983,6 +994,10 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
       <div class="day-sub" id="hero-sub"></div>
       <div class="cat-scroll home-filter" id="home-filter"></div>
       <div id="wx-card" style="display:none" class="card wx-card"></div>
+      <div class="card" id="tl-card" style="display:none">
+        <div class="card-title">Heute im Zeitplan</div>
+        <div id="tl-list"></div>
+      </div>
 
       <div class="card" id="home-habits-card" style="display:none">
         <div class="card-title">Gewohnheiten heute <span class="mini-link" data-goto="ziele">Alle ›</span></div>
@@ -1340,6 +1355,31 @@ function renderHome() {
     </div>`;
   }).join('')
     : '<div class="empty"><span class="e-icon msr"></span>Keine offenen Aufgaben</div>';
+
+  // Zeitachse heute
+  const tlItems = [
+    ...S.events.filter(e => e.date === t && e.time).map(e => ({ time: e.time, title: e.title, col: e.color || 'var(--lav)', tag: null, id: e.id, kind: 'ev' })),
+    ...EXT.filter(e => e.date === t && e.time).map(e => ({ time: e.time, title: e.title, col: 'var(--lav)', tag: SRC_LABEL[e.src] || 'Kalender', id: e.id, kind: 'ev' })),
+    ...S.tasks.filter(x => !x.done && x.due === t && x.dueTime).map(x => ({ time: x.dueTime, title: x.title, col: 'var(--lime)', tag: 'Aufgabe', id: x.id, kind: 'task' }))
+  ].sort((a, b) => a.time.localeCompare(b.time));
+  const tlCard = $('#tl-card');
+  if (tlItems.length) {
+    tlCard.style.display = '';
+    const nowHM = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    let nowShown = false;
+    let tlHtml = '';
+    tlItems.forEach(it => {
+      if (!nowShown && it.time >= nowHM) { tlHtml += '<div class="tl-now"><span class="tl-dot-now"></span><span class="tl-line"></span></div>'; nowShown = true; }
+      tlHtml += `<div class="tl-row ${it.time < nowHM ? 'past' : ''}" ${it.kind === 'ev' ? `data-ev="${it.id}"` : `data-edit="${it.id}"`}>
+        <span class="tl-time">${esc(it.time)}</span>
+        <span class="tl-bar" style="background:${it.col}"></span>
+        <span class="tl-main">${esc(it.title)}</span>
+        ${it.tag ? `<span class="tl-tag">${esc(it.tag)}</span>` : ''}
+      </div>`;
+    });
+    if (!nowShown) tlHtml += '<div class="tl-now"><span class="tl-dot-now"></span><span class="tl-line"></span></div>';
+    $('#tl-list').innerHTML = tlHtml;
+  } else tlCard.style.display = 'none';
 
   // Gewohnheiten heute
   const hc = $('#home-habits-card');
