@@ -78,7 +78,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   position: absolute; inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: calc(var(--sat) + 14px) 18px calc(var(--sab) + 62px);
+  padding: calc(var(--sat) + 14px) 18px calc(max(10px, var(--sab)) + 86px);
   opacity: 0; transform: translateY(6px) scale(.995);
   pointer-events: none;
   transition: opacity .22s ease, transform .22s ease;
@@ -504,8 +504,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 /* Viewport-Fix: App misst ihre sichtbare Höhe selbst (--vh per JS),
    alle unteren Elemente hängen absolut an der ECHTEN Unterkante */
 html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 100%; overscroll-behavior: none; }
-#app { position: fixed; top: 0; left: 0; right: 0; height: 100dvh; }
-@supports not (height: 100dvh) { #app { height: var(--vh, 100vh); } }
+#app { position: fixed; top: 0; left: 0; right: 0; height: calc(100dvh + var(--bargap, 0px)); }
+@supports not (height: 100dvh) { #app { height: calc(var(--vh, 100vh) + var(--bargap, 0px)); } }
 .tabbar, .fab, .fab-mic, .sheet, .toast { position: absolute; }
 .sheet-backdrop { position: absolute; inset: 0; }
 
@@ -552,7 +552,6 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
   -webkit-backdrop-filter: saturate(160%) blur(18px);
   padding: 9px 8px;
   box-shadow: 0 12px 34px rgba(19,19,22,.32);
-  transform: translateY(var(--bargap, 0px));
 }
 [data-theme="dark"] .tabbar { box-shadow: 0 14px 38px rgba(0,0,0,.5); border: 1px solid var(--line); }
 .tab { color: #86868E; padding: 6px 14px; font-size: 0; gap: 0; }
@@ -562,20 +561,18 @@ html, body { height: 100%; overflow: hidden; position: fixed; inset: 0; width: 1
 [data-theme="dark"] .tab.on { color: #F4F3EC; }
 .tab.on .t-ic { animation: tabBounce .3s cubic-bezier(.34,1.56,.64,1); }
 @keyframes tabBounce { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: scale(1); } }
-@media (min-width: 700px) { .tabbar { max-width: 520px; left: 50%; transform: translateX(-50%) translateY(var(--bargap, 0px)); border-radius: 999px; } }
+@media (min-width: 700px) { .tabbar { max-width: 520px; left: 50%; transform: translateX(-50%); border-radius: 999px; } }
 
 /* FABs */
 .fab {
   background: var(--lav); color: #131316;
   bottom: calc(max(10px, var(--sab)) + 70px);
   box-shadow: 0 12px 28px rgba(167,139,250,.5);
-  transform: translateY(var(--bargap, 0px));
 }
 .fab-mic {
   background: var(--pill); color: var(--pill-text); border: none;
   bottom: calc(max(10px, var(--sab)) + 134px);
   box-shadow: 0 10px 24px rgba(19,19,22,.3);
-  transform: translateY(var(--bargap, 0px));
 }
 
 /* Buttons & Sheets */
@@ -729,7 +726,7 @@ body.sheet-open .tabbar, body.sheet-open .fab, body.sheet-open .fab-mic { opacit
 .sheet .ms-add button { background: var(--lav); color: #131316; }
 
 /* Toast leicht anheben über der Pill-Nav */
-.toast { bottom: calc(max(10px, var(--sab)) + 74px); transform: translateX(-50%) translateY(var(--bargap, 0px)); }
+.toast { bottom: calc(max(10px, var(--sab)) + 74px); }
 
 /* ═══════════ V7 — Typografie, Icons, Farbe ═══════════ */
 body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -789,6 +786,12 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 .cat-chip, .chip, .seg button { transition: transform .12s ease, background .18s ease, color .18s ease, border-color .18s ease; }
 .tab.on::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--lime); margin-top: 1px; }
 .tab::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-top: 1px; }
+/* Boden-Elemente an der App-Fläche verankern (die bis zum echten Bildschirmrand reicht) */
+.fab, .fab-mic { position: absolute; }
+.toast { position: absolute; }
+.sheet { position: absolute; }
+.viewer { position: absolute; }
+
 /* ---------- Vollbild-Viewer ---------- */
 .viewer {
   position: fixed; inset: 0; z-index: 70; background: var(--bg);
@@ -3109,7 +3112,16 @@ function fixBarGap() {
   const standalone = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
   if (!standalone) return;
   const gap = Math.round(screen.height - window.innerHeight);
-  document.documentElement.style.setProperty('--bargap', (gap > 0 && gap < 160 ? gap : 0) + 'px');
+  const g = (gap > 0 && gap < 160) ? gap : 0;
+  document.documentElement.style.setProperty('--bargap', g + 'px');
+  if (g > 0 && document.body) {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);left:0;width:1px;height:1px;visibility:hidden;pointer-events:none';
+    document.body.appendChild(probe);
+    const satVal = probe.getBoundingClientRect().top;
+    probe.remove();
+    if (satVal < 20) document.documentElement.style.setProperty('--sat', '56px');
+  }
 }
 window.addEventListener('resize', fixBarGap);
 window.addEventListener('orientationchange', () => setTimeout(fixBarGap, 300));
