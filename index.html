@@ -2083,10 +2083,20 @@ function sheetTask(t) {
     ${catChipsHtml('st-cat', t ? t.cat : null)}
     <div class="f-label">Notizen / Liste (optional)</div>
     <textarea class="f-area" id="st-notes" placeholder="Details, Einkaufsliste, Hinweise…&#10;Ein Punkt pro Zeile" style="min-height:70px">${t ? esc(t.notes || '') : ''}</textarea>
+    <div class="f-label">Push-Erinnerung</div>
+    <div class="chip-row" id="st-remind">
+      ${[0,5,15,30,60].map(m => `<button class="chip ${((t && typeof t.remind === 'number') ? t.remind : 30) === m ? 'on' : ''}" data-rm="${m}">${m === 0 ? 'Keine' : m + ' Min'}</button>`).join('')}
+    </div>
     <button class="btn btn-primary" id="st-save">${isNew ? 'Hinzufügen' : 'Speichern'}</button>
     ${isNew ? '' : '<button class="btn btn-ghost-danger" id="st-del">Löschen</button>'}
   `);
   let prio = t && t.prio ? t.prio : 'niedrig';
+  let remind = (t && typeof t.remind === 'number') ? t.remind : 30;
+  $('#st-remind').addEventListener('click', e => {
+    const b = e.target.closest('[data-rm]'); if (!b) return;
+    remind = Number(b.dataset.rm);
+    document.querySelectorAll('#st-remind .chip').forEach(c => c.classList.toggle('on', c === b));
+  });
   let cat = t ? t.cat || null : null;
   bindCatRow('st-cat', v => cat = v);
   $('#st-prio').addEventListener('click', e => {
@@ -2103,10 +2113,10 @@ function sheetTask(t) {
     if (!title) { toast('Bitte einen Titel eingeben'); return; }
     const dueTime = $('#st-time').value || null;
     if (isNew) {
-      S.tasks.unshift({ id: uid(), title, due: $('#st-due').value || (dueTime ? todayIso() : null), dueTime, prio, cat, notes: $('#st-notes').value.trim(), done: false, doneAt: null, notified: false });
+      S.tasks.unshift({ id: uid(), title, due: $('#st-due').value || (dueTime ? todayIso() : null), dueTime, prio, cat, remind, notes: $('#st-notes').value.trim(), done: false, doneAt: null, notified: false });
       toast('Aufgabe hinzugefügt');
     } else {
-      Object.assign(t, { title, due: $('#st-due').value || (dueTime ? todayIso() : null), dueTime, prio, cat, notes: $('#st-notes').value.trim(), notified: false });
+      Object.assign(t, { title, due: $('#st-due').value || (dueTime ? todayIso() : null), dueTime, prio, cat, remind, notes: $('#st-notes').value.trim(), notified: false });
       toast('Gespeichert');
     }
     save(); closeSheet(); renderAll();
@@ -2143,11 +2153,21 @@ function sheetEvent(ev, presetDate) {
     ${catChipsHtml('se-cat', ev ? ev.cat : null)}
     <div class="f-label">Notiz (optional)</div>
     <input class="f-input" id="se-notes" placeholder="Ort, Details…" value="${ev ? esc(ev.notes || '') : ''}">
+    <div class="f-label">Push-Erinnerung</div>
+    <div class="chip-row" id="se-remind">
+      ${[0,5,15,30,60].map(m => `<button class="chip ${((ev && typeof ev.remind === 'number') ? ev.remind : 30) === m ? 'on' : ''}" data-rm="${m}">${m === 0 ? 'Keine' : m + ' Min'}</button>`).join('')}
+    </div>
     <button class="btn btn-primary" id="se-save">${isNew ? 'Hinzufügen' : 'Speichern'}</button>
     ${isNew ? '' : '<button class="btn btn-ghost-danger" id="se-del">Löschen</button>'}
   `);
   let cat = ev ? ev.cat || null : null;
   bindCatRow('se-cat', v => cat = v);
+  let remind = (ev && typeof ev.remind === 'number') ? ev.remind : 30;
+  $('#se-remind').addEventListener('click', e => {
+    const b = e.target.closest('[data-rm]'); if (!b) return;
+    remind = Number(b.dataset.rm);
+    document.querySelectorAll('#se-remind .chip').forEach(c => c.classList.toggle('on', c === b));
+  });
   $('#se-colors').addEventListener('click', e => {
     const b = e.target.closest('[data-c]'); if (!b) return;
     color = b.dataset.c;
@@ -2158,10 +2178,10 @@ function sheetEvent(ev, presetDate) {
     const date = $('#se-date').value;
     if (!title || !date) { toast('Titel und Datum angeben'); return; }
     if (isNew) {
-      S.events.push({ id: uid(), title, date, time: $('#se-time').value || null, color, cat, notes: $('#se-notes').value.trim() });
+      S.events.push({ id: uid(), title, date, time: $('#se-time').value || null, color, cat, remind, notes: $('#se-notes').value.trim() });
       toast('Termin hinzugefügt');
     } else {
-      Object.assign(ev, { title, date, time: $('#se-time').value || null, color, cat, notes: $('#se-notes').value.trim() });
+      Object.assign(ev, { title, date, time: $('#se-time').value || null, color, cat, remind, notes: $('#se-notes').value.trim() });
       toast('Gespeichert');
     }
     selDay = date;
