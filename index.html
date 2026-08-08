@@ -859,6 +859,15 @@ body { font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-ser
 }
 .num-step .num-val { flex: 1; text-align: center; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
 
+.proj-chev { color: var(--text-3); font-size: 20px; transition: transform .22s; display: inline-block; padding: 6px; margin: -6px; }
+.proj-chev.open { transform: rotate(90deg); }
+.proj-row { cursor: pointer; }
+.proj-edit-btn {
+  width: 100%; margin-top: 12px; border: none; background: var(--card-2); color: var(--text-2);
+  border-radius: 12px; padding: 11px; font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+
 /* ---------- Verknüpfungen ---------- */
 .link-chip {
   display: inline-flex; align-items: center; gap: 7px; background: var(--accent-soft); color: var(--accent);
@@ -2268,32 +2277,36 @@ function projProgress(p) {
   if (p.milestones && p.milestones.length) return Math.round(p.milestones.filter(m => m.done).length / p.milestones.length * 100);
   return 0;
 }
+const projOpen = new Set();
 function projRowHtml(p, compact) {
+  const isOpen = projOpen.has(p.id);
   const pct = projProgress(p);
   const nextMs = (p.milestones || []).find(m => !m.done);
   const c = catById(p.cat);
-  return `<div class="proj-row" data-proj="${p.id}">
+  return `<div class="proj-row" ${compact ? `data-proj-go="${p.id}"` : `data-proj="${p.id}"`}>
     <div class="proj-top">
       <div class="proj-title">${c ? icon(c.icon) + ' ' : ''}${esc(p.title)}</div>
       <div class="proj-pct" ${pct >= 100 ? 'style="color:var(--ok)"' : ''}>${pct >= 100 ? '✓ Erreicht' : pct + '%'}</div>
+      ${compact ? '' : `<span class="proj-chev ${isOpen ? 'open' : ''} msr">${ICON.chevron_right}</span>`}
     </div>
     <div class="proj-bar"><div style="width:${pct}%;${pct >= 100 ? 'background:var(--ok)' : (c ? 'background:' + c.color : '')}"></div></div>
     <div class="proj-meta">
       ${p.cat ? catTag(p.cat) : ''}
       ${p.deadline ? `<span>bis ${esc(relDay(p.deadline))}</span>` : ''}
-      ${compact && nextMs ? `<span>· Nächster Schritt: ${esc(nextMs.title)}</span>` : ''}
-      ${compact && p.goalVal ? `<span><b>${p.currentVal || 0}</b> / ${p.goalVal} ${esc(p.unit || '')}</span>` : ''}
+      ${(compact || !isOpen) && nextMs ? `<span>· Nächster Schritt: ${esc(nextMs.title)}</span>` : ''}
+      ${(compact || !isOpen) && p.goalVal ? `<span><b>${p.currentVal || 0}</b> / ${p.goalVal} ${esc(p.unit || '')}</span>` : ''}
     </div>
-    ${!compact && (p.milestones || []).length ? `<div class="ms-list">${p.milestones.map(m => `
+    ${!compact && isOpen && (p.milestones || []).length ? `<div class="ms-list">${p.milestones.map(m => `
       <div class="ms-row ${m.done ? 'done' : ''}">
         <div class="ms-check" data-msx="${p.id}:${m.id}">✓</div>
         <span>${esc(m.title)}</span>
       </div>`).join('')}</div>` : ''}
-    ${!compact && p.goalVal ? `<div class="num-step">
+    ${!compact && isOpen && p.goalVal ? `<div class="num-step">
       <button data-numstep="${p.id}:-1">−</button>
       <div class="num-val">${p.currentVal || 0} / ${p.goalVal} ${esc(p.unit || '')}</div>
       <button data-numstep="${p.id}:1">＋</button>
     </div>` : ''}
+    ${!compact && isOpen ? `<button class="proj-edit-btn" data-projedit="${p.id}">${icon('edit_note')} Ziel bearbeiten</button>` : ''}
   </div>`;
 }
 document.addEventListener('click', e => {
@@ -2378,8 +2391,21 @@ document.addEventListener('click', e => {
   if (hh) { toggleHabitToday(hh.dataset.hh, hh); return; }
   const he = e.target.closest('[data-habit-edit]');
   if (he) { sheetHabit(S.habits.find(x => x.id === he.dataset.habitEdit)); return; }
+  const pe = e.target.closest('[data-projedit]');
+  if (pe) { sheetProject(S.projects.find(x => x.id === pe.dataset.projedit)); return; }
+  const pg = e.target.closest('[data-proj-go]');
+  if (pg) {
+    projOpen.add(pg.dataset.projGo);
+    switchTab('ziele'); renderZiele(); vibrate();
+    setTimeout(() => { const el = document.querySelector(`#view-ziele [data-proj="${pg.dataset.projGo}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120);
+    return;
+  }
   const pr = e.target.closest('[data-proj]');
-  if (pr) sheetProject(S.projects.find(x => x.id === pr.dataset.proj));
+  if (pr) {
+    const id = pr.dataset.proj;
+    projOpen.has(id) ? projOpen.delete(id) : projOpen.add(id);
+    renderZiele(); vibrate();
+  }
   if (e.target.id === 'add-project' || e.target.closest('#add-project')) sheetProject(null);
   if (e.target.id === 'add-habit' || e.target.closest('#add-habit')) sheetHabit(null);
 });
